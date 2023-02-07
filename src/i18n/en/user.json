@@ -1,0 +1,7 @@
+{
+  "errors": {
+    "duplicate_phone": "User with this phone number already exists",
+    "bad_req": "Invalid request parameters",
+    "not_found": "User is not found"
+  }
+}

@@ -9,5 +9,4 @@ export class AppController {
   baseGetter(): string {
     return this.appService.getBaseGetter();
   }
-
 }

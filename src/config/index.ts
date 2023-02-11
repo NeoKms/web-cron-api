@@ -33,6 +33,8 @@ export const ORMConfig: TypeOrmModuleOptions = {
   migrationsRun: true,
   migrations: ['dist/migrations/*{.ts,.js}'],
   autoLoadEntities: true,
+  logging: ['query', 'error'],
+  logger: 'file',
 };
 
 export default () => ({

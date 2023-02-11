@@ -1,4 +1,5 @@
-import { SshClient, SshConfig } from './SshClient';
+import { SshClient } from './SshClient';
+import { SshConfig } from '../../helpers/interfaces/ssh';
 
 interface ConnectionList {
   [key: string]: {

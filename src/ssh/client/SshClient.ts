@@ -1,30 +1,11 @@
 import { NodeSSH, SSHExecCommandOptions } from 'node-ssh';
-export interface SshConfig {
-  host: string;
-  port?: number;
-  privateKeyPath: string;
-  username: string;
-}
-interface CronTimeElement {
-  value: string;
-  period: string;
-}
-interface CronTimer {
-  minute: CronTimeElement;
-  hour: CronTimeElement;
-  day: CronTimeElement;
-  month: CronTimeElement;
-  weekDay: CronTimeElement;
-}
-export interface CronJob {
-  time: CronTimer;
-  job: string;
-  logfile: string;
-}
-enum SshCommands {
-  getCron = 'crontab -l',
-  createCronTemplate = " echo '' > /var/spool/cron/crontabs/__USERNAME__",
-}
+import {
+  CronJob,
+  CronTimeElement,
+  SshCommands,
+  SshConfig,
+} from '../../helpers/interfaces/ssh';
+
 export class SshClient {
   private readonly WEB_CRON_MARK = '#web-cron';
   private readonly config: SshConfig = null;

@@ -16,6 +16,7 @@ export const defaultRights = {
   logs: rights.deny,
   jobs: rights.deny,
   users: rights.deny,
+  ssh: rights.deny,
 };
 export const MESSAGE_OK = { message: 'ok' };
 

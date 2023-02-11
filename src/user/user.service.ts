@@ -8,9 +8,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, LessThan, Repository } from 'typeorm';
 import User from './entities/user.entity';
-import { FindOneUser } from '../helpers/interfaces/user/findOneUser.interface';
+import { FindOneUser } from '../helpers/interfaces/user';
 import { I18nService } from 'nestjs-i18n';
-import { SimpleObject } from '../helpers/interfaces/common/simplejObect.interface';
+import { SimpleObject } from '../helpers/interfaces/common';
 import { I18nTranslations } from '../i18n/i18n.generated';
 
 @Injectable()

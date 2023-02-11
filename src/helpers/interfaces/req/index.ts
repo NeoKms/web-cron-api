@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { ResponseUserDto } from '../../../user/dto/response-user.dto';
-import { SimpleObject } from '../common/simplejObect.interface';
+import { SimpleObject } from '../common';
 
 export interface ReqWithUser extends Request {
   user: ResponseUserDto;

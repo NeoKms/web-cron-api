@@ -1,7 +1,7 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { LoggedInGuard } from './logged-in.guard';
 import { Reflector } from '@nestjs/core';
-import { ReqWithUser } from '../../helpers/interfaces/req/reqWithUser.interface';
+import { ReqWithUser } from '../../helpers/interfaces/req';
 import { RightObject } from './rights.decorator';
 import { rights } from '../../helpers/constants';
 import { RedisService } from 'nestjs-redis';

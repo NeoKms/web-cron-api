@@ -18,8 +18,8 @@ import { ResponseUserDto } from './dto/response-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { Rights } from '../auth/passport/rights.decorator';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DefaultMessageDto } from '../helpers/interfaces/common/defaultMessage.dto';
-import { MWRDto } from '../helpers/interfaces/common/MWR.dto';
+import { DefaultMessageDto } from '../helpers/interfaces/common';
+import { MWRDto } from '../helpers/interfaces/common';
 import { MESSAGE_OK } from '../helpers/constants';
 
 @ApiTags('user')

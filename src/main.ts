@@ -13,6 +13,10 @@ import * as morgan from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
 
+process.on('uncaughtException', (err) => {
+  const logger = new Logger();
+  logger.error(err, 'uncaughtException');
+});
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

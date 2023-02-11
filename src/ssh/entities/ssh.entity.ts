@@ -1,7 +1,36 @@
-import { Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import User from '../../user/entities/user.entity';
 
 @Entity()
-export class SshEntity {
+@Index(['host', 'username'], { unique: true })
+export default class SshEntity {
   @PrimaryGeneratedColumn()
   public id: number;
+  @Column('text')
+  public host: string;
+  @Column({ type: 'int' })
+  public port: number;
+  @Column('text')
+  public username: string;
+
+  @Column('text')
+  public description: string;
+  @Column('text')
+  public privateKeyPath: string;
+  @Column({ type: 'int' })
+  public created_at: number;
+  @Column({ type: 'int', nullable: true })
+  public updated_at: number;
+  @Column({ type: 'int', nullable: true })
+  public deleted_at: number;
+  @ManyToOne(() => User, (user) => user.sshEntities)
+  @JoinColumn()
+  public userEntity: User;
 }

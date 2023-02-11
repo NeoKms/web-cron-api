@@ -25,7 +25,7 @@ enum SshCommands {
   getCron = 'crontab -l',
   createCronTemplate = " echo '' > /var/spool/cron/crontabs/__USERNAME__",
 }
-export class Ssh {
+export class SshClient {
   private readonly WEB_CRON_MARK = '#web-cron';
   private readonly config: SshConfig = null;
   private readonly instance: NodeSSH = null;
@@ -34,7 +34,7 @@ export class Ssh {
     this.config = config;
     this.instance = new NodeSSH();
   }
-  public async waitConnection(): Promise<Ssh> {
+  public async waitConnection(): Promise<SshClient> {
     return this.instance.connect(this.config).then(() => this);
   }
 

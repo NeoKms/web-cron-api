@@ -18,10 +18,10 @@ import { LocalAuthGuard } from './passport/local-auth.guard';
 import { LoggedInGuard } from './passport/logged-in.guard';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DefaultMessageDto } from '../helpers/interfaces/defaultMessage.dto';
-import { ReqWithUser } from '../helpers/interfaces/reqWithUser.interface';
+import { DefaultMessageDto } from '../helpers/interfaces/common/defaultMessage.dto';
+import { ReqWithUser } from '../helpers/interfaces/req/reqWithUser.interface';
 import { MESSAGE_OK } from '../helpers/constants';
-import { UserProfile } from '../helpers/interfaces/user.decorator';
+import { UserProfile } from '../helpers/decorators/user.decorator';
 import { REQUEST } from '@nestjs/core';
 
 @ApiTags('auth')

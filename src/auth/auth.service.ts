@@ -6,7 +6,7 @@ import { hashPassword } from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
-import { ReqWithUser } from '../helpers/interfaces/reqWithUser.interface';
+import { ReqWithUser } from '../helpers/interfaces/req/reqWithUser.interface';
 
 @Injectable()
 export class AuthService {

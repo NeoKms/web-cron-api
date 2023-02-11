@@ -3,4 +3,5 @@ export interface FindOneUser {
   phone?: string;
   onlyActive?: boolean;
   withoutError?: boolean;
+  login?: string;
 }

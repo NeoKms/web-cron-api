@@ -49,8 +49,8 @@ export class AuthService {
   ): Promise<ResponseUserDto | null | -1 | -2> {
     let result = null;
     this.logger.log('login: ' + username);
-    req.sentryContext.breadcrumbs.push({ f: 'login phone', v: username });
-    const user = await this.userService.findOne({ phone: username });
+    req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
+    const user = await this.userService.findOne({ login: username });
     user.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
       user.login_timestamp = Math.round(Date.now() / 1000);

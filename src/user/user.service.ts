@@ -47,7 +47,7 @@ export class UserService {
   }
 
   async findOne(
-    { id, phone, onlyActive, withoutError }: FindOneUser,
+    { id, phone, onlyActive, withoutError, login }: FindOneUser,
     manager?: EntityManager,
   ): Promise<User> {
     let where: SimpleObject = {};
@@ -64,6 +64,8 @@ export class UserService {
     }
     if (id) {
       where.id = id;
+    } else if (login) {
+      where.login = login;
     } else if (phone) {
       where.phone = phone;
     } else {

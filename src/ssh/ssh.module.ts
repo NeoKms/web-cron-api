@@ -7,4 +7,4 @@ import { SshService } from './ssh.service';
   controllers: [SshController],
   providers: [SshService],
 })
-export class UserModule {}
+export class SshModule {}

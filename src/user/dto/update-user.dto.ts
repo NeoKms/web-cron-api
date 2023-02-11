@@ -37,12 +37,12 @@ export class UpdateUserDto {
     if (this.secondname) {
       fio += ' ' + this.secondname;
     }
-    return fio;
+    return fio.trim();
   }
 
   public toEntity(id: number) {
     const entity: User = new User({ id });
-    if (this.fio()!) {
+    if (this.fio()) {
       entity.fio = this.fio();
     }
     if (this.rights) {

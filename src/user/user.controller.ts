@@ -46,7 +46,7 @@ export class UserController {
   ): Promise<MWRDto<ResponseUserDto>> {
     const result = plainToInstance(
       ResponseUserDto,
-      this.userService.create(createUserDto),
+      await this.userService.create(createUserDto),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -85,7 +85,7 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<MWRDto<ResponseUserDto>> {
-    const user = this.userService.update(+id, updateUserDto);
+    const user = await this.userService.update(+id, updateUserDto);
     const result = plainToInstance(ResponseUserDto, user);
     return { ...MESSAGE_OK, result };
   }

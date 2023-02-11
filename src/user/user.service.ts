@@ -91,6 +91,7 @@ export class UserService {
     manager?: EntityManager,
   ): Promise<User> {
     const repo = manager ? manager.getRepository(User) : this.userRepository;
+    await this.findOne({ id, onlyActive: null }, manager);
     const userEntityToUpd: User = updateUserDto.toEntity(id);
     if (userEntityToUpd.phone) {
       const isExistUserByPhone = await this.findOne(

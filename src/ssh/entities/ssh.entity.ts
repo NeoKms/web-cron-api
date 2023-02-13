@@ -6,11 +6,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import User from '../../user/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity()
 @Index(['host', 'username'], { unique: true })
-export default class SshEntity {
+export class Ssh {
   @PrimaryGeneratedColumn()
   public id: number;
   @Column('text')
@@ -19,11 +19,8 @@ export default class SshEntity {
   public port: number;
   @Column('text')
   public username: string;
-
   @Column('text')
   public description: string;
-  @Column('text')
-  public privateKeyPath: string;
   @Column({ type: 'int' })
   public created_at: number;
   @Column({ type: 'int', nullable: true })

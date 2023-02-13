@@ -11,10 +11,14 @@ import * as pathModule from 'path';
 import { DataSourceOptions } from 'typeorm/data-source/DataSourceOptions';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { SshModule } from './ssh/ssh.module';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
+    NestjsFormDataModule.config({ isGlobal: true }),
     ConfigModule.forRoot({
+      isGlobal: true,
       load: [config],
     }),
     RedisModule.forRootAsync({
@@ -45,6 +49,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     UserModule,
     AuthModule,
+    SshModule,
   ],
   controllers: [AppController],
   providers: [AppService],

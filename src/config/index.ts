@@ -2,6 +2,7 @@ import { resolve } from 'path';
 import * as dotenv from 'dotenv';
 import * as fsSync from 'fs';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm/dist/interfaces/typeorm-options.interface';
+import { existsSync, mkdirSync } from 'fs';
 
 const { env } = process;
 const PRODUCTION: boolean =
@@ -43,6 +44,9 @@ export default () => ({
   PORT: parseInt(env.PORT) || 3001,
   DB: ORMConfig,
   UPLOAD,
+  U_DIRS: {
+    keys: checkStaticDir(UPLOAD + 'keys/'),
+  },
   REDIS: {
     host: env.REDIS_HOST,
     port: parseInt(env.REDIS_PORT),
@@ -53,3 +57,10 @@ export default () => ({
     cookie_domain: env.COOKIE_DOMAIN,
   },
 });
+
+function checkStaticDir(dir: string): string {
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true, mode: 0o776 });
+  }
+  return dir;
+}

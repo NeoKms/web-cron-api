@@ -1,0 +1,7 @@
+{
+  "errors": {
+    "duplicate": "Connection with this username and host already exists",
+    "no_id": "Id field value is not set for update",
+    "not_found": "Connection is not found"
+  }
+}

@@ -7,7 +7,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, LessThan, Repository } from 'typeorm';
-import User from './entities/user.entity';
+import { User } from './entities/user.entity';
 import { FindOneUser } from '../helpers/interfaces/user';
 import { I18nService } from 'nestjs-i18n';
 import { SimpleObject } from '../helpers/interfaces/common';

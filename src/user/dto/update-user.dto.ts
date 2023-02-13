@@ -1,12 +1,12 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
-import User from '../entities/user.entity';
+import { User } from '../entities/user.entity';
 import RightsDto from '../../auth/dto/rights.dto';
 
 @Exclude()
 export class UpdateUserDto {
   @Expose()
-  @Type((type) => RightsDto)
+  @Type(() => RightsDto)
   @IsOptional()
   public rights?: RightsDto;
 

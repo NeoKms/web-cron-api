@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
-import User from '../entities/user.entity';
+import { User } from '../entities/user.entity';
 import { hashPassword, transliterate } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
 

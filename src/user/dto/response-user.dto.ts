@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsNumber, IsObject, IsString } from 'class-validator';
-import User from '../entities/user.entity';
+import { User } from '../entities/user.entity';
 import RightsDto from '../../auth/dto/rights.dto';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -16,7 +16,7 @@ export class ResponseUserDto extends PartialType(User) {
 
   @Expose()
   @IsObject()
-  @Type((type) => RightsDto)
+  @Type(() => RightsDto)
   public rights: RightsDto;
 
   @Expose()

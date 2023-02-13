@@ -1,10 +1,10 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { defaultRights } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
-import SshEntity from '../../ssh/entities/ssh.entity';
+import { Ssh } from '../../ssh/entities/ssh.entity';
 
 @Entity()
-export default class User {
+export class User {
   @PrimaryGeneratedColumn()
   public id: number;
 
@@ -35,8 +35,8 @@ export default class User {
   @Column({ type: 'int', default: 0 })
   public banned_to: number;
 
-  @OneToMany(() => SshEntity, (ssh) => ssh.userEntity)
-  sshEntities: SshEntity;
+  @OneToMany(() => Ssh, (ssh) => ssh.userEntity)
+  sshEntities: Ssh;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

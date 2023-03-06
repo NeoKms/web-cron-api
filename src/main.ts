@@ -7,7 +7,7 @@ import { AllExceptionsFilter } from './helpers/all-exceptions.filter';
 import { RedisService } from 'nestjs-redis';
 import { Logger } from '@nestjs/common';
 import * as session from 'express-session';
-import * as RedisStore from 'connect-redis';
+import RedisStore from 'connect-redis';
 import * as cookieParser from 'cookie-parser';
 import * as morgan from 'morgan';
 import * as bodyParser from 'body-parser';
@@ -71,10 +71,7 @@ async function bootstrap() {
           sameSite: 'lax',
           domain: sessConf.cookie_domain,
         },
-        store: new (RedisStore(session))({
-          logErrors: true,
-          client: redisClient,
-        }),
+        store: new RedisStore({ client: redisClient }),
       }),
     )
     .use(passport.initialize())

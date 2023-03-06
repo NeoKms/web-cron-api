@@ -111,7 +111,7 @@ export class UserController {
   }
 
   @Rights({
-    entity: 'org_struct',
+    entity: 'users',
     level: 'write',
   })
   @Get(':id/unban')

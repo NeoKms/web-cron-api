@@ -6,11 +6,10 @@ import {
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ssh } from './entities/ssh.entity';
-import { SimpleObject } from '../helpers/interfaces/common';
 import CreateSshDto from './dto/create-ssh.dto';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { ConfigService } from '@nestjs/config';
-import fsModule from 'fs/promises';
+import * as fsModule from 'fs/promises';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import UpdateSshDto from './dto/update-ssh.dto';

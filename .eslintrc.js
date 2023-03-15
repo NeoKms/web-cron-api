@@ -32,6 +32,7 @@ module.exports = {
     '**/.idea',
     '**/.husky',
     '.eslintrc.js',
+    'dist/',
   ],
   rules: {
     semi: ['error', 'always'],

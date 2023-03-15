@@ -8,7 +8,6 @@ import { RedisModule } from 'nestjs-redis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as pathModule from 'path';
-import { DataSourceOptions } from 'typeorm/data-source/DataSourceOptions';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { SshModule } from './ssh/ssh.module';

@@ -46,6 +46,7 @@ export class AuthController {
   @Post('/login')
   async login(
     @UserProfile() user: ResponseUserDto,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Body() loginDto: LoginDto,
   ): Promise<{ auth: ResponseUserDto }> {
     return { auth: user };

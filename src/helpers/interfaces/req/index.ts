@@ -5,5 +5,5 @@ import { SimpleObject } from '../common';
 export interface ReqWithUser extends Request {
   user: ResponseUserDto;
   sentryContext: { tags: SimpleObject; breadcrumbs: any[] };
-  logout: (cb) => {};
+  logout: (cb) => void;
 }

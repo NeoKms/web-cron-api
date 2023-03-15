@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { BaseExceptionFilter, HttpAdapterHost } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import Sentry from '@sentry/node';
 
-const Sentry = require('@sentry/node');
 const logger = new Logger();
 
 @Catch()
@@ -53,7 +53,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
             for (const [tagName, tagValue] of Object.entries(
               req.sentryContext.tags,
             )) {
-              scope.setTag(tagName, tagValue);
+              scope.setTag(tagName, tagValue as string);
             }
           }
           if (req.sentryContext.breadcrumbs.length) {
@@ -61,7 +61,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
               scope.addBreadcrumb({
                 category: bread.f,
                 message: bread.v,
-                level: Sentry.Severity.Info,
+                level: 'info',
               });
             }
           }

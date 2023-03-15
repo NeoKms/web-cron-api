@@ -1,10 +1,6 @@
 import { NodeSSH, SSHExecCommandOptions } from 'node-ssh';
-import {
-  CronJob,
-  CronTimeElement,
-  SshCommands,
-  SshConfig,
-} from '../../helpers/interfaces/ssh';
+import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
+import { CronTimeElement } from '../../helpers/interfaces/jobs';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = '#web-cron';

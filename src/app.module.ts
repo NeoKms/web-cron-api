@@ -12,6 +12,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { SshModule } from './ssh/ssh.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     UserModule,
     AuthModule,
     SshModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

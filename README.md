@@ -6,9 +6,7 @@ $ nest g resource name
 ## Installation
 
 ```bash
-
 $ npm install
-
 ```
 
 ## Running the app

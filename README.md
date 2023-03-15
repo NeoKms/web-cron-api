@@ -1,7 +1,14 @@
+## Resource
+```bash
+$ nest g resource name
+```
+
 ## Installation
 
 ```bash
+
 $ npm install
+
 ```
 
 ## Running the app
@@ -28,17 +35,4 @@ $ npm run migration:up
 
 # rollback
 $ npm run migration:down
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```

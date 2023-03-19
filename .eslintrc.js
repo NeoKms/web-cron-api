@@ -33,6 +33,7 @@ module.exports = {
     '**/.husky',
     '.eslintrc.js',
     'dist/',
+    'src/i18n/i18n.generated.ts',
   ],
   rules: {
     semi: ['error', 'always'],

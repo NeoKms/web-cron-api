@@ -14,6 +14,8 @@ jobs:
           fetch-depth: 0
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2022.3.4
+        with:
+          args: --baseline,qodana.sarif.json
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_REMOTE_URL: ${{ github.server_url }}/${{ github.repository }}
@@ -23,4 +25,4 @@ jobs:
       - name: "GitHub code scanning"
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.jso
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json

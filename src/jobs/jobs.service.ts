@@ -13,7 +13,6 @@ export class JobsService {
   constructor(
     @InjectRepository(Job)
     private readonly jobRepository: Repository<Job>,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async list(params: FilterJobsDto): Promise<Job[]> {

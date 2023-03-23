@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../i18n/i18n.generated';
 import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from './entities/job.entity';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
 import FilterJobsDto from './dto/filter-jobs.dto';
-import { Ssh } from '../ssh/entities/ssh.entity';
+import CreateJobDto from './dto/create-job.dto';
 
 @Injectable()
 export class JobsService {
@@ -33,6 +31,13 @@ export class JobsService {
       options.where;
     }
     return this.__filter(options);
+  }
+
+  async create(dto: CreateJobDto, manager?: EntityManager) {
+    const newJob = dto.toEntity();
+    return manager
+      ? manager.save(Job, newJob)
+      : this.jobRepository.save(newJob);
   }
 
   private async __filter(

@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { SimpleObject } from '../../helpers/interfaces/common';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsObject, IsString } from 'class-validator';
 import PaginationDto from '../../helpers/pagination.dto';
 
 @Exclude()

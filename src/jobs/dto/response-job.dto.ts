@@ -1,7 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
-import { Job } from '../entities/job.entity';
 import { CronTimerDto } from './cron-timer.dto';
 import { Ssh } from '../../ssh/entities/ssh.entity';
 

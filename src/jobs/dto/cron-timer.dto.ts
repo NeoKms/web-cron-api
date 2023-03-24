@@ -6,7 +6,6 @@ import {
   IsNumber,
   IsObject,
   IsOptional,
-  IsString,
   Max,
   Min,
   ValidateNested,

@@ -66,7 +66,7 @@ export class JobsService {
     if (!exist) {
       throw new NotFoundException(this.i18n.t('job.errors.not_found'));
     }
-    await repo.save(repo.create(Object.assign(dto, { id })));
+    await repo.update(id, repo.create(dto));
     return this.__filter({ where: { id: id } }).then(([res]) => res);
   }
 

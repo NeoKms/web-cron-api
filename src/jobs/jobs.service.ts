@@ -15,19 +15,19 @@ export class JobsService {
 
   async list(params: FilterJobsDto): Promise<Job[]> {
     const options: FindManyOptions<Job> = {};
-    if (params.options.itemsPerPage) {
+    if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
-      if (params.options.page) {
+      if (params.options?.page) {
         options.skip = params.options.itemsPerPage * (params.options.page - 1);
       }
     }
-    if (params.select.length) {
+    if (params.select?.length) {
       options.select = params.select.reduce((acc, el) => {
         acc[el] = true;
         return acc;
       }, {});
     }
-    if (Object.entries(params.whereRaw).length) {
+    if (Object.entries(params?.whereRaw ?? {}).length) {
       options.where;
     }
     return this.__filter(options);

@@ -1,20 +1,24 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { SimpleObject } from '../../helpers/interfaces/common';
-import { IsObject, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 import PaginationDto from '../../helpers/pagination.dto';
 
 @Exclude()
 export default class FilterJobsDto {
   @Expose()
+  @IsOptional()
   @IsString({ each: true })
-  public select: Array<string>;
+  public select?: Array<string>;
   @Expose()
   @IsObject()
-  public filter: SimpleObject;
+  @IsOptional()
+  public filter?: SimpleObject;
   @Expose()
   @IsObject()
-  public whereRaw: SimpleObject;
+  @IsOptional()
+  public whereRaw?: SimpleObject;
   @Expose()
+  @IsOptional()
   @Type(() => PaginationDto)
-  public options: PaginationDto;
+  public options?: PaginationDto;
 }

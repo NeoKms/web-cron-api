@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "not_found": "Job is not found",
+    "bad_req": "Invalid request parameters"
+  }
+}

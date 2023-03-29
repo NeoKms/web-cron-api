@@ -2,7 +2,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { Ssh } from '../entities/ssh.entity';
 import { Exclude, Expose } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { getNowTimestampMs } from '../../helpers/constants';
+import { getNowTimestampSec } from '../../helpers/constants';
 
 @Exclude()
 export default class UpdateSshDto extends PartialType(Ssh) {
@@ -30,7 +30,7 @@ export default class UpdateSshDto extends PartialType(Ssh) {
     if (this.username) {
       it.username = this.username;
     }
-    this.updated_at = getNowTimestampMs();
+    this.updated_at = getNowTimestampSec();
     return it;
   }
 }

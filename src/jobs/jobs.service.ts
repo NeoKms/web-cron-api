@@ -11,6 +11,7 @@ import FilterJobsDto from './dto/filter-jobs.dto';
 import CreateJobDto from './dto/create-job.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
+import { SshService } from '../ssh/ssh.service';
 
 @Injectable()
 export class JobsService {
@@ -18,6 +19,7 @@ export class JobsService {
     @InjectRepository(Job)
     private readonly jobRepository: Repository<Job>,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly sshService: SshService,
   ) {}
   async list(params: FilterJobsDto): Promise<Job[]> {
     const options: FindManyOptions<Job> = {};
@@ -33,16 +35,36 @@ export class JobsService {
         return acc;
       }, {});
     }
-    if (Object.entries(params?.whereRaw ?? {}).length) {
-      options.where;
+    if (Object.entries(params?.whereRaw ?? {})?.length) {
+      options.where = params.whereRaw;
     }
     return this.__filter(options);
   }
   async create(dto: CreateJobDto, manager?: EntityManager): Promise<Job> {
     const newJob = dto.toEntity();
-    return manager
+    const job = await (manager
       ? manager.save(Job, newJob)
-      : this.jobRepository.save(newJob);
+      : this.jobRepository.save(newJob));
+    await this.updateJobsOnServer(job.id, manager);
+    return job;
+  }
+
+  private async updateJobsOnServer(
+    id: number,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const [job] = await this.__filter(
+      {
+        where: { id },
+        select: { sshEntityId: true },
+      },
+      manager,
+    );
+    const jobs = await this.__filter({
+      select: ['id', 'job', 'time'],
+      where: { sshEntityId: job.sshEntityId },
+    });
+    return this.sshService.updateJobsOnServer(job.sshEntityId, jobs);
   }
   async updateStatus(
     id: number,
@@ -52,6 +74,7 @@ export class JobsService {
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
     await this.checkExist(id, true, manager);
     await repo.update(id, repo.create({ isActive: status }));
+    await this.updateJobsOnServer(id, manager);
   }
   async update(
     id: number,
@@ -64,7 +87,8 @@ export class JobsService {
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
     await this.checkExist(id, true, manager);
     await repo.update(id, repo.create(dto));
-    return this.__filter({ where: { id: id } }).then(([res]) => res);
+    await this.updateJobsOnServer(id, manager);
+    return this.__filter({ where: { id } }).then(([res]) => res);
   }
   private async __filter(
     options: FindManyOptions<Job>,
@@ -80,8 +104,8 @@ export class JobsService {
   ): Promise<boolean> {
     const [exist] = await this.__filter(
       {
-        where: { id: id },
-        select: { id: true },
+        where: { id },
+        select: ['id'],
       },
       manager,
     );

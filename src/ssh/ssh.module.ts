@@ -9,5 +9,6 @@ import { Ssh } from './entities/ssh.entity';
   imports: [TypeOrmModule.forFeature([Ssh]), ConfigModule],
   controllers: [SshController],
   providers: [SshService],
+  exports: [SshService],
 })
 export class SshModule {}

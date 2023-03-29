@@ -14,6 +14,8 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import UpdateSshDto from './dto/update-ssh.dto';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
+import SshClientFactory from './client/SshClientFactory';
+import { Job } from '../jobs/entities/job.entity';
 @Injectable()
 export class SshService {
   constructor(
@@ -42,6 +44,22 @@ export class SshService {
     return repo.find(options);
   }
 
+  async updateJobsOnServer(
+    id: number,
+    jobs: Job[],
+    manager?: EntityManager,
+  ): Promise<void> {
+    const sshEntity = await this.getById(id, manager);
+    const client = await SshClientFactory.getSSHInstance({
+      host: sshEntity.host,
+      username: sshEntity.username,
+      port: sshEntity.port,
+      privateKeyPath: this.configService.get('U_DIRS.keys') + sshEntity.id,
+    });
+    const result = await client.setJobs(jobs);
+    console.log(result);
+  }
+
   public async create(
     createSshDto: CreateSshDto,
     user: ResponseUserDto,
@@ -51,9 +69,7 @@ export class SshService {
       const repo = manager.getRepository(Ssh);
       const [isExist] = await this.__filter(
         {
-          select: {
-            id: true,
-          },
+          select: ['id'],
           where: { username: createSshDto.username, host: createSshDto.host },
         },
         manager,

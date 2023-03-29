@@ -1,6 +1,6 @@
 export interface CronTimeElement {
-  value: string;
-  period: string;
+  value: number;
+  period: boolean;
 }
 export interface CronTimer {
   minute: CronTimeElement;

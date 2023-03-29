@@ -98,6 +98,6 @@ export const transliterate = (text: string): string => {
     .map((char) => a[char] || char)
     .join('');
 };
-export const getNowTimestampMs = (): number => {
+export const getNowTimestampSec = (): number => {
   return Math.round(Date.now() / 1000);
 };

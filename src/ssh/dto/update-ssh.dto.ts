@@ -9,15 +9,15 @@ export default class UpdateSshDto extends PartialType(Ssh) {
   @Expose()
   @IsNumber()
   @IsOptional()
-  public port: number;
+  public port?: number;
   @Expose()
   @IsString()
   @IsOptional()
-  public username: string;
+  public username?: string;
   @Expose()
   @IsString()
   @IsOptional()
-  public description: string;
+  public description?: string;
   public toEntity(): Ssh {
     const it = new Ssh();
     it.id = this.id;

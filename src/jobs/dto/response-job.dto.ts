@@ -1,13 +1,10 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
-import { Job } from '../entities/job.entity';
-import { CronTimer } from '../../helpers/interfaces/jobs';
-import { CronTimerDto } from './cronTimer.dto';
+import { CronTimerDto } from './cron-timer.dto';
 import { Ssh } from '../../ssh/entities/ssh.entity';
 
 @Exclude()
-export default class ResponseJobDto extends PartialType(Job) {
+export default class ResponseJobDto {
   @Expose()
   @IsNumber()
   public id: number;
@@ -24,6 +21,6 @@ export default class ResponseJobDto extends PartialType(Job) {
   @IsNumber()
   public sshEntityId: number;
   @Expose()
-  @Type(() => PartialType(Ssh))
+  @Type(() => Ssh)
   public sshEntity: Ssh;
 }

@@ -33,5 +33,5 @@ export class Ssh {
   @JoinColumn()
   public userEntity: User;
   @OneToMany(() => Job, (job) => job.sshEntity)
-  jobEntities: Job;
+  public jobEntities: Job[];
 }

@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Ssh } from '../../ssh/entities/ssh.entity';
-import { CronTimer } from '../../helpers/interfaces/jobs';
+import { CronTimerDto } from '../dto/cron-timer.dto';
 
 @Entity()
 export class Job {
@@ -17,8 +17,12 @@ export class Job {
   public sshEntity: Ssh;
   @Column()
   public job: string;
-  @Column('text')
-  public time: CronTimer;
+  @Column({ type: 'json' })
+  public time: CronTimerDto;
   @Column('tinyint')
   public isActive: number;
+
+  constructor(partial: Partial<Job>) {
+    Object.assign(this, partial);
+  }
 }

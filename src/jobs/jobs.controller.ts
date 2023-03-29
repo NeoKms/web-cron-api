@@ -6,6 +6,7 @@ import {
   ValidationPipe,
   Body,
   Post,
+  Param,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -15,6 +16,7 @@ import FilterJobsDto from './dto/filter-jobs.dto';
 import { MWRDto } from '../helpers/interfaces/common';
 import ResponseJobDto from './dto/response-job.dto';
 import { plainToInstance } from 'class-transformer';
+import CreateJobDto from './dto/create-job.dto';
 
 @ApiTags('jobs')
 @Controller('jobs')
@@ -39,6 +41,37 @@ export class JobsController {
     const result = plainToInstance(
       ResponseJobDto,
       await this.jobsService.list(params),
+    );
+    return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'jobs',
+    level: 'write',
+  })
+  @ApiResponse({ type: ResponseJobDto })
+  @Post('')
+  async create(@Body() params: CreateJobDto): Promise<MWRDto<ResponseJobDto>> {
+    const result = plainToInstance(
+      ResponseJobDto,
+      await this.jobsService.create(params),
+    );
+    return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'jobs',
+    level: 'write',
+  })
+  @ApiResponse({ type: ResponseJobDto })
+  @Post('/:id')
+  async update(
+    @Body() params: Partial<CreateJobDto>,
+    @Param('id') id: string,
+  ): Promise<MWRDto<ResponseJobDto>> {
+    const result = plainToInstance(
+      ResponseJobDto,
+      await this.jobsService.update(+id, params),
     );
     return { ...MESSAGE_OK, result };
   }

@@ -12,6 +12,12 @@ export type I18nTranslations = {
             "ban_login": string;
         };
     };
+    "job": {
+        "errors": {
+            "not_found": string;
+            "bad_req": string;
+        };
+    };
     "ssh": {
         "errors": {
             "duplicate": string;

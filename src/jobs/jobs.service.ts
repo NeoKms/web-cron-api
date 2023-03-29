@@ -38,6 +38,7 @@ export class JobsService {
     if (Object.entries(params?.whereRaw ?? {})?.length) {
       options.where = params.whereRaw;
     }
+    options.where['isDel'] = 0;
     return this.__filter(options);
   }
   async create(dto: CreateJobDto, manager?: EntityManager): Promise<Job> {
@@ -62,7 +63,7 @@ export class JobsService {
     );
     const jobs = await this.__filter({
       select: ['id', 'job', 'time'],
-      where: { sshEntityId: job.sshEntityId },
+      where: { sshEntityId: job.sshEntityId, isDel: 0 },
     });
     return this.sshService.updateJobsOnServer(job.sshEntityId, jobs);
   }
@@ -104,7 +105,7 @@ export class JobsService {
   ): Promise<boolean> {
     const [exist] = await this.__filter(
       {
-        where: { id },
+        where: { id, isDel: 0 },
         select: ['id'],
       },
       manager,
@@ -117,6 +118,12 @@ export class JobsService {
 
   async delete(id: number, manager?: EntityManager): Promise<void> {
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    await repo.delete(id);
+    const { affected } = await repo.update(
+      { id, isDel: 0 },
+      repo.create({ isDel: 1 }),
+    );
+    if (affected !== 0) {
+      await this.updateJobsOnServer(id, manager);
+    }
   }
 }

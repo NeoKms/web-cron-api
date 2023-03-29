@@ -23,6 +23,8 @@ export class Job {
   public time: CronTimerDto;
   @Column('tinyint')
   public isActive: number;
+  @Column('tinyint')
+  public isDel: number;
 
   constructor(partial: Partial<Job>) {
     Object.assign(this, partial);

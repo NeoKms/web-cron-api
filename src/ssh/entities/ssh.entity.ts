@@ -30,8 +30,10 @@ export class Ssh {
   @Column({ type: 'int', nullable: true })
   public deleted_at: number;
   @ManyToOne(() => User, (user) => user.sshEntities)
-  @JoinColumn()
+  @JoinColumn({ name: 'userEntityId' })
   public userEntity: User;
+  @Column()
+  public userEntityId: number;
   @OneToMany(() => Job, (job) => job.sshEntity)
   public jobEntities: Job[];
 }

@@ -15,7 +15,7 @@ import {
 export class CronTimeElementMinDto {
   @Expose()
   @IsNumber()
-  @Min(0)
+  @Min(-1)
   @Max(59)
   public value: number;
   @Expose()
@@ -26,7 +26,7 @@ export class CronTimeElementMinDto {
 export class CronTimeElementHourDto {
   @Expose()
   @IsNumber()
-  @Min(0)
+  @Min(-1)
   @Max(23)
   public value: number;
   @Expose()
@@ -37,7 +37,7 @@ export class CronTimeElementHourDto {
 export class CronTimeElementDayOfMonthDto {
   @Expose()
   @IsNumber()
-  @Min(1)
+  @Min(-1)
   @Max(31)
   public value: number;
   @Expose()
@@ -48,7 +48,7 @@ export class CronTimeElementDayOfMonthDto {
 export class CronTimeElementMonthDto {
   @Expose()
   @IsNumber()
-  @Min(1)
+  @Min(-1)
   @Max(12)
   public value: number;
   @Expose()
@@ -59,7 +59,7 @@ export class CronTimeElementMonthDto {
 export class CronTimeElementDayOfWeekDto {
   @Expose()
   @IsNumber()
-  @Min(0)
+  @Min(-1)
   @Max(6)
   public value: number;
   @Expose()

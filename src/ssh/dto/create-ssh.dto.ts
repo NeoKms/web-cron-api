@@ -8,7 +8,7 @@ import {
   MaxFileSize,
   MemoryStoredFile,
 } from 'nestjs-form-data';
-import { getNowTimestampMs } from '../../helpers/constants';
+import { getNowTimestampSec } from '../../helpers/constants';
 import { ResponseUserDto } from '../../user/dto/response-user.dto';
 import { User } from '../../user/entities/user.entity';
 
@@ -38,7 +38,7 @@ export default class CreateSshDto extends PartialType(Ssh) {
 
   public toEntity({ id }: Pick<ResponseUserDto, 'id'>): Ssh {
     const it = new Ssh();
-    it.created_at = getNowTimestampMs();
+    it.created_at = getNowTimestampSec();
     it.host = this.host;
     it.port = this.port || 22;
     it.userEntity = new User({ id });

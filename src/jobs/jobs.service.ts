@@ -90,4 +90,9 @@ export class JobsService {
     }
     return !!exist;
   }
+
+  async delete(id: number, manager?: EntityManager): Promise<void> {
+    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+    await repo.delete(id);
+  }
 }

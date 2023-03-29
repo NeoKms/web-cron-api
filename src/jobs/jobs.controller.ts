@@ -8,6 +8,7 @@ import {
   Post,
   Param,
   Get,
+  Delete,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -94,6 +95,16 @@ export class JobsController {
   @Get('/:id/deactivate')
   async deactivate(@Param('id') id: string): Promise<DefaultMessageDto> {
     await this.jobsService.updateStatus(+id, 0);
+    return MESSAGE_OK;
+  }
+
+  @Rights({
+    entity: 'jobs',
+    level: 'write',
+  })
+  @Delete('/:id')
+  async delete(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.jobsService.delete(+id);
     return MESSAGE_OK;
   }
 }

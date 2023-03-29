@@ -19,7 +19,6 @@ export class JobsService {
     private readonly jobRepository: Repository<Job>,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
-
   async list(params: FilterJobsDto): Promise<Job[]> {
     const options: FindManyOptions<Job> = {};
     if (params.options?.itemsPerPage) {
@@ -39,14 +38,21 @@ export class JobsService {
     }
     return this.__filter(options);
   }
-
   async create(dto: CreateJobDto, manager?: EntityManager): Promise<Job> {
     const newJob = dto.toEntity();
     return manager
       ? manager.save(Job, newJob)
       : this.jobRepository.save(newJob);
   }
-
+  async updateStatus(
+    id: number,
+    status: 0 | 1,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+    await this.checkExist(id, true, manager);
+    await repo.update(id, repo.create({ isActive: status }));
+  }
   async update(
     id: number,
     dto: Partial<CreateJobDto>,
@@ -56,6 +62,22 @@ export class JobsService {
       throw new BadRequestException(this.i18n.t('job.errors.bad_req'));
     }
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+    await this.checkExist(id, true, manager);
+    await repo.update(id, repo.create(dto));
+    return this.__filter({ where: { id: id } }).then(([res]) => res);
+  }
+  private async __filter(
+    options: FindManyOptions<Job>,
+    manager?: EntityManager,
+  ): Promise<Job[]> {
+    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+    return repo.find(options);
+  }
+  private async checkExist(
+    id: number,
+    withError = true,
+    manager?: EntityManager,
+  ): Promise<boolean> {
     const [exist] = await this.__filter(
       {
         where: { id: id },
@@ -63,18 +85,9 @@ export class JobsService {
       },
       manager,
     );
-    if (!exist) {
+    if (!exist && withError) {
       throw new NotFoundException(this.i18n.t('job.errors.not_found'));
     }
-    await repo.update(id, repo.create(dto));
-    return this.__filter({ where: { id: id } }).then(([res]) => res);
-  }
-
-  private async __filter(
-    options: FindManyOptions<Job>,
-    manager?: EntityManager,
-  ): Promise<Job[]> {
-    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    return repo.find(options);
+    return !!exist;
   }
 }

@@ -7,13 +7,14 @@ import {
   Body,
   Post,
   Param,
+  Get,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Rights } from '../auth/passport/rights.decorator';
 import { MESSAGE_OK } from '../helpers/constants';
 import FilterJobsDto from './dto/filter-jobs.dto';
-import { MWRDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import ResponseJobDto from './dto/response-job.dto';
 import { plainToInstance } from 'class-transformer';
 import CreateJobDto from './dto/create-job.dto';
@@ -74,5 +75,25 @@ export class JobsController {
       await this.jobsService.update(+id, params),
     );
     return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'jobs',
+    level: 'write',
+  })
+  @Get('/:id/activate')
+  async activate(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.jobsService.updateStatus(+id, 1);
+    return MESSAGE_OK;
+  }
+
+  @Rights({
+    entity: 'jobs',
+    level: 'write',
+  })
+  @Get('/:id/deactivate')
+  async deactivate(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.jobsService.updateStatus(+id, 0);
+    return MESSAGE_OK;
   }
 }

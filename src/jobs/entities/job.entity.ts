@@ -21,9 +21,9 @@ export class Job {
   public job: string;
   @Column({ type: 'json' })
   public time: CronTimerDto;
-  @Column('tinyint')
+  @Column('tinyint', { default: 1 })
   public isActive: number;
-  @Column('tinyint')
+  @Column('tinyint', { default: 0 })
   public isDel: number;
 
   constructor(partial: Partial<Job>) {

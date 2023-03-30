@@ -55,6 +55,13 @@ export class SshClient {
       SshCommands.createLogDir.replace('__ID__', id.toString()),
     );
   }
+  private setJobScript(job: Job): Promise<string> {
+    return this.execCommand(
+      SshCommands.createJobScript
+        .replace('__ID__', job.id.toString())
+        .replace('__JOB__', job.job),
+    );
+  }
   private parseCronFile(data: string): CronJob[] {
     const jobs: CronJob[] = [];
     let next = false;
@@ -86,7 +93,7 @@ export class SshClient {
     return this.cronJobs;
   }
 
-  private jobToString(job: Job): string {
+  private createCronJobString(job: Job) {
     const getTime = (timeElement: CronTimeElement): string => {
       return (
         (timeElement.period ? '*/' : '') +
@@ -99,9 +106,9 @@ export class SshClient {
       getTime(job.time.day),
       getTime(job.time.weekDay),
       getTime(job.time.month),
-      job.job,
+      `~/webcron/${job.id}.sh`,
       '>>',
-      '~/cron_logs/' + job.id + '/`date +\\%s`',
+      `~/webcron/cron_logs/${job.id}` + '/`date +\\%s`',
       // this.JOB_ID_MARK + job.id,
     ].join(' ');
   }
@@ -126,10 +133,11 @@ export class SshClient {
     const promises = [];
     jobs.forEach((job) => {
       cronFile += `\n${this.WEB_CRON_MARK}`;
-      cronFile += `\n${this.jobToString(job)}`;
+      cronFile += `\n${this.createCronJobString(job)}`;
       promises.push(this.createLogDir(job.id));
     });
     await Promise.all(promises);
+    await Promise.all(jobs.map((job) => this.setJobScript(job)));
     return this.setCronFile(cronFile);
   }
   private async getCronFile(): Promise<string> {

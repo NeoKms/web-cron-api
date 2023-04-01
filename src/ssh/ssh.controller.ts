@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { SshService } from './ssh.service';
 import { Rights } from '../auth/passport/rights.decorator';
-import { MWRDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import { MESSAGE_OK } from '../helpers/constants';
 import ResponseSshDto from './dto/response-ssh.dto';
 import { plainToInstance } from 'class-transformer';
@@ -65,6 +65,12 @@ export class SshController {
     return { ...MESSAGE_OK, result };
   }
 
+  //ToDo only dev feature
+  @Get('/:id/upsert_logs')
+  async upsert_logs(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.sshService.upsertLogs(+id);
+    return MESSAGE_OK;
+  }
   @Rights({
     entity: 'ssh',
     level: 'write',

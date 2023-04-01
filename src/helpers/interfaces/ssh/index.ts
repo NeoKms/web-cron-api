@@ -18,5 +18,7 @@ export enum SshCommands {
   applyCronFile = 'crontab ~/crontabFile',
   setCron = "cat<<'EOF'>~/crontabFile\n__JOBS__\nEOF",
   createLogDir = 'mkdir -p ~/webcron/cron_logs/__ID__',
-  createJobScript = 'cat<<\'EOF\'>~/webcron/__ID__.sh\necho "JstartJ="`date +\\%s`\n__JOB__\necho "JendJ="`date +\\%s`\nEOF',
+  createJobScript = 'cat<<\'EOF\'>~/webcron/__ID__.sh\n__JOB__\necho "JendJ="`date +\\%s`\nEOF',
+  getJobsList = 'ls ~/webcron/cron_logs',
+  getJobLogList = 'ls ~/webcron/cron_logs/__ID__',
 }

@@ -16,6 +16,7 @@ import UpdateSshDto from './dto/update-ssh.dto';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
 import SshClientFactory from './client/SshClientFactory';
 import { Job } from '../jobs/entities/job.entity';
+import { LogService } from '../log/log.service';
 @Injectable()
 export class SshService {
   constructor(
@@ -24,11 +25,22 @@ export class SshService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly logService: LogService,
   ) {}
   async getMany(manager?: EntityManager): Promise<Ssh[]> {
     return this.__filter({}, manager);
   }
 
+  async upsertLogs(id: number) {
+    const sshEntity = await this.getById(id);
+    const client = await SshClientFactory.getSSHInstance({
+      host: sshEntity.host,
+      username: sshEntity.username,
+      port: sshEntity.port,
+      privateKeyPath: this.configService.get('U_DIRS.keys') + sshEntity.id,
+    });
+    await client.upsertLogs(this.logService);
+  }
   async getById(id: number, manager?: EntityManager): Promise<Ssh> {
     const [result] = await this.__filter({ where: { id } }, manager);
     if (!result) {
@@ -56,8 +68,7 @@ export class SshService {
       port: sshEntity.port,
       privateKeyPath: this.configService.get('U_DIRS.keys') + sshEntity.id,
     });
-    const result = await client.setJobs(jobs);
-    console.log(result);
+    await client.setJobs(jobs);
   }
 
   public async create(

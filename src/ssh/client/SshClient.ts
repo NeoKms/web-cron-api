@@ -3,6 +3,7 @@ import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
 import * as Sentry from '@sentry/node';
+import { Ssh } from '../entities/ssh.entity';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
@@ -114,6 +115,30 @@ export class SshClient {
     ].join(' ');
   }
 
+  public async upsertLogs(logService) {
+    const jobIds = await this.execCommand(SshCommands.getJobsList).then(
+      (data) =>
+        data
+          .split('\n')
+          .map((id_str) => +id_str)
+          .filter((id) => !!id),
+    );
+    console.log(jobIds);
+    for (let i = 0, c = jobIds.length; i < c; i++) {
+      const id = jobIds[i];
+      const list = await this.execCommand(
+        SshCommands.getJobLogList.replace('__ID__', id.toString()),
+      );
+      const logFiles = list.split('\n');
+      console.log(list);
+      for (let i2 = 0, c2 = logFiles.length; i2 < c2; i2++) {
+        const logFileName = logFiles[i2];
+        //toDo
+        await logService.create();
+      }
+    }
+  }
+
   private deleteAllJobsFromFile(cronFile: string): string {
     const splitted = cronFile.split('\n');
     splitted
@@ -148,9 +173,8 @@ export class SshClient {
     });
   }
   private async setCronFile(jobs: string): Promise<string> {
-    const cmd = SshCommands.setCron.replace('__JOBS__', jobs);
-    return this.execCommand(cmd).then(() =>
-      this.execCommand(SshCommands.applyCronFile),
+    return this.execCommand(SshCommands.setCron.replace('__JOBS__', jobs)).then(
+      () => this.execCommand(SshCommands.applyCronFile),
     );
   }
 }

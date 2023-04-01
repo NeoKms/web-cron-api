@@ -3,10 +3,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Ssh } from '../../ssh/entities/ssh.entity';
 import { CronTimerDto } from '../dto/cron-timer.dto';
+import { Log } from '../../log/eitities/log.entity';
 
 @Entity()
 export class Job {
@@ -25,6 +27,8 @@ export class Job {
   public isActive: number;
   @Column('tinyint', { default: 0 })
   public isDel: number;
+  @OneToMany(() => Log, (log) => log.jobEntityId)
+  private logEntities: Log[];
 
   constructor(partial: Partial<Job>) {
     Object.assign(this, partial);

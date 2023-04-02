@@ -21,4 +21,6 @@ export enum SshCommands {
   createJobScript = 'cat<<\'EOF\'>~/webcron/__ID__.sh\n__JOB__\necho "JendJ="`date +\\%s`\nEOF',
   getJobsList = 'ls ~/webcron/cron_logs',
   getJobLogList = 'ls ~/webcron/cron_logs/__ID__',
+  getLogFile = 'cat ~/webcron/cron_logs/__ID__/__FILE__',
+  delLogFile = 'rm ~/webcron/cron_logs/__ID__/__FILE__',
 }

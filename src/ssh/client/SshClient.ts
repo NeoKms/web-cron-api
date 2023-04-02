@@ -3,7 +3,7 @@ import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
 import * as Sentry from '@sentry/node';
-import { Ssh } from '../entities/ssh.entity';
+import { Log } from '../../log/eitities/log.entity';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
@@ -133,8 +133,28 @@ export class SshClient {
       console.log(list);
       for (let i2 = 0, c2 = logFiles.length; i2 < c2; i2++) {
         const logFileName = logFiles[i2];
-        //toDo
-        await logService.create();
+        const [logText, end] = await this.execCommand(
+          SshCommands.getLogFile
+            .replace('__ID__', id.toString())
+            .replace('__FILE__', logFileName),
+        ).then((content) => content.split('\nJendJ='));
+        const logObj: Log = {
+          timestamp_start: +logFileName,
+          timestamp_end: null,
+          status: 0,
+          content: logText,
+        };
+        if (logText.match(/JendJ=/)) {
+          logObj.status = 2;
+          logObj.timestamp_end = +logText.split('\nJendJ=')[1];
+          await this.execCommand(
+            SshCommands.delLogFile
+              .replace('__ID__', id.toString())
+              .replace('__FILE__', logFileName),
+          );
+        }
+        console.log(logText);
+        // await logService.create();
       }
     }
   }

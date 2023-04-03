@@ -22,7 +22,7 @@ export class JobsService {
     private readonly sshService: SshService,
   ) {}
   async list(params: FilterJobsDto): Promise<Job[]> {
-    const options: FindManyOptions<Job> = {};
+    const options: FindManyOptions<Job> = { where: {} };
     if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
       if (params.options?.page) {
@@ -63,7 +63,7 @@ export class JobsService {
     );
     const jobs = await this.__filter({
       select: ['id', 'job', 'time'],
-      where: { sshEntityId: job.sshEntityId, isDel: 0 },
+      where: { sshEntityId: job.sshEntityId, isDel: 0, isActive: 1 },
     });
     return this.sshService.updateJobsOnServer(job.sshEntityId, jobs);
   }

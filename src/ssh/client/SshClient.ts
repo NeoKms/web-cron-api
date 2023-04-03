@@ -3,7 +3,8 @@ import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
 import * as Sentry from '@sentry/node';
-import { Log } from '../../log/eitities/log.entity';
+import { CreateLogDto } from '../../log/dto/create-log.dto';
+import { plainToInstance } from 'class-transformer';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
@@ -59,7 +60,7 @@ export class SshClient {
   private setJobScript(job: Job): Promise<string> {
     return this.execCommand(
       SshCommands.createJobScript
-        .replace('__ID__', job.id.toString())
+        .replace(/__ID__/g, job.id.toString())
         .replace('__JOB__', job.job),
     );
   }
@@ -109,9 +110,7 @@ export class SshClient {
       getTime(job.time.day),
       getTime(job.time.weekDay),
       getTime(job.time.month),
-      `~/webcron/${job.id}.sh`,
-      '>>',
-      `~/webcron/cron_logs/${job.id}` + '/`date +\\%s`',
+      `sh ~/webcron/${job.id}.sh`,
     ].join(' ');
   }
 
@@ -123,14 +122,23 @@ export class SshClient {
           .map((id_str) => +id_str)
           .filter((id) => !!id),
     );
-    console.log(jobIds);
     for (let i = 0, c = jobIds.length; i < c; i++) {
       const id = jobIds[i];
       const list = await this.execCommand(
         SshCommands.getJobLogList.replace('__ID__', id.toString()),
       );
-      const logFiles = list.split('\n');
-      console.log(list);
+      const allFiles = list.split('\n').filter((el) => !!el);
+      const { logFiles, logErrors } = allFiles.reduce(
+        (acc, filename) => {
+          if (filename.match('_error')) {
+            acc.logErrors.push(filename);
+          } else {
+            acc.logFiles.push(filename);
+          }
+          return acc;
+        },
+        { logFiles: [], logErrors: [] },
+      );
       for (let i2 = 0, c2 = logFiles.length; i2 < c2; i2++) {
         const logFileName = logFiles[i2];
         const [logText, end] = await this.execCommand(
@@ -138,23 +146,40 @@ export class SshClient {
             .replace('__ID__', id.toString())
             .replace('__FILE__', logFileName),
         ).then((content) => content.split('\nJendJ='));
-        const logObj: Log = {
-          timestamp_start: +logFileName,
-          timestamp_end: null,
-          status: 0,
-          content: logText,
-        };
-        if (logText.match(/JendJ=/)) {
-          logObj.status = 2;
-          logObj.timestamp_end = +logText.split('\nJendJ=')[1];
+        const errorFileName = logErrors.find((el) => el.match(logFileName));
+        let errorText = '';
+        if (errorFileName) {
+          errorText = await this.execCommand(
+            SshCommands.getLogFile
+              .replace('__ID__', id.toString())
+              .replace('__FILE__', errorFileName),
+          ).then((t) => t.trim());
+        }
+        if (end) {
           await this.execCommand(
             SshCommands.delLogFile
               .replace('__ID__', id.toString())
               .replace('__FILE__', logFileName),
           );
+          if (errorFileName) {
+            await this.execCommand(
+              SshCommands.delLogFile
+                .replace('__ID__', id.toString())
+                .replace('__FILE__', errorFileName),
+            );
+          }
         }
-        console.log(logText);
-        // await logService.create();
+        const logObj = plainToInstance(CreateLogDto, {
+          timestamp_start: +logFileName,
+          timestamp_end: end ? +end : null,
+          status: end ? (errorText ? 3 : 2) : 1,
+          content: {
+            text: logText,
+            error: errorText,
+          },
+          jobEntityId: id,
+        });
+        await logService.create(logObj);
       }
     }
   }

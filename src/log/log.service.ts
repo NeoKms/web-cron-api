@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Log } from './eitities/log.entity';
+import { CreateLogDto } from './dto/create-log.dto';
 @Injectable()
 export class LogService {
   constructor(
@@ -9,8 +10,8 @@ export class LogService {
     private readonly logRepository: Repository<Log>,
   ) {}
 
-  async create() {
-    console.log('in create');
-    //toDo
+  async create(dto: CreateLogDto, manager?: EntityManager) {
+    const repo = manager ? manager.getRepository(Log) : this.logRepository;
+    return repo.save(dto.toEntity());
   }
 }

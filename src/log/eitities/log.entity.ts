@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Job } from '../../jobs/entities/job.entity';
+import { ContentDto } from '../dto/content.dto';
 @Entity()
 export class Log {
   @PrimaryColumn()
@@ -14,7 +15,7 @@ export class Log {
   @Column({ nullable: true })
   public timestamp_end: number;
   @Column('json')
-  public content: string;
+  public content: ContentDto;
   @Column('tinyint', {
     comment: '1=in progress, 2=finish success, 3=finish with error',
     default: 1,

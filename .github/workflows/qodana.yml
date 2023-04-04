@@ -18,7 +18,6 @@ jobs:
         uses: JetBrains/qodana-action@v2022.3.4
         with:
           args: --baseline,qodana.sarif.json
-          pr-mode: false
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_REMOTE_URL: ${{ github.server_url }}/${{ github.repository }}

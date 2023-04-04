@@ -33,11 +33,13 @@ export type I18nTranslations = {
             "duplicate": string;
             "no_id": string;
             "not_found": string;
+            "cannot_delete": string;
         };
         "messages": {
             "start_all_servers": string;
             "need_add_count": string;
             "add_server_id": string;
+            "delete_server_id": string;
             "cron_job_start": string;
             "cron_job_end": string;
         };

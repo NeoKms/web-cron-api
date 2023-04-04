@@ -21,10 +21,12 @@ import { LogService } from '../log/log.service';
 import { CronExpression, SchedulerRegistry, Timeout } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import Sentry from '@sentry/node';
+import { getNowTimestampSec } from '../helpers/constants';
 @Injectable()
 export class SshService {
   private readonly logger = new Logger(SshService.name);
   private serversInProgress = new Set();
+  private readonly cronJobNameTemplate = 'cronjob_logs_for_server___ID__';
 
   constructor(
     @InjectRepository(Ssh)
@@ -39,12 +41,33 @@ export class SshService {
     return this.__filter({}, manager);
   }
 
+  private deleteCronJobForServer(id) {
+    this.schedulerRegistry.deleteCronJob(
+      this.cronJobNameTemplate.replace('__ID__', id),
+    );
+    this.logger.log(
+      this.i18n.t('ssh.messages.delete_server_id', { args: { id } }),
+    );
+  }
+  private setCronJobForServer(id) {
+    const job = new CronJob(
+      CronExpression.EVERY_MINUTE,
+      this.serverLogCronJobWrapper(id),
+    );
+    this.schedulerRegistry.addCronJob(
+      this.cronJobNameTemplate.replace('__ID__', id),
+      job,
+    );
+    job.start();
+    this.logger.log(
+      this.i18n.t('ssh.messages.add_server_id', { args: { id } }),
+    );
+  }
   @Timeout(1000)
   private async setAllServersInSchedule() {
     this.logger.log(this.i18n.t('ssh.messages.start_all_servers'));
     const serverIds = await this.__filter({
       select: ['id'],
-      where: { deleted_at: IsNull() },
     }).then((res) => res.map((el) => el.id));
     this.logger.log(
       this.i18n.t('ssh.messages.need_add_count', {
@@ -53,15 +76,7 @@ export class SshService {
     );
     for (let i = 0, c = serverIds.length; i < c; i++) {
       const id = serverIds[i];
-      const job = new CronJob(
-        CronExpression.EVERY_MINUTE,
-        this.serverLogCronJobWrapper(id),
-      );
-      this.schedulerRegistry.addCronJob(`cronjob_logs_for_server_${id}`, job);
-      job.start();
-      this.logger.log(
-        this.i18n.t('ssh.messages.add_server_id', { args: { id } }),
-      );
+      this.setCronJobForServer(id);
     }
   }
 
@@ -100,9 +115,13 @@ export class SshService {
     return result;
   }
   private async __filter(
-    options: FindManyOptions,
+    options: FindManyOptions<Ssh>,
     manager?: EntityManager,
   ): Promise<Ssh[]> {
+    if (!Object.prototype.hasOwnProperty.call(options, 'where')) {
+      options.where = {};
+    }
+    options.where['deleted_at'] = IsNull();
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
     return repo.find(options);
   }
@@ -157,5 +176,22 @@ export class SshService {
     await repo.update(id, updateSshDto.toEntity());
     const [result] = await this.__filter({}, manager);
     return result;
+  }
+
+  async delete(id: number, manager?: EntityManager): Promise<void> {
+    const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
+    const res = await repo
+      .createQueryBuilder('ssh')
+      .leftJoin('job', 'job', 'job.sshEntityId=ssh.id and job.isDel = 0')
+      .select(['ssh.id', 'COUNT(job.id) as jobs'])
+      .where('ssh.id = :id', { id })
+      .groupBy('ssh.id')
+      .having('jobs>0')
+      .getRawOne();
+    if (res) {
+      throw new BadRequestException(this.i18n.t('ssh.errors.cannot_delete'));
+    }
+    await repo.update(id, repo.create({ deleted_at: getNowTimestampSec() }));
+    this.deleteCronJobForServer(id);
   }
 }

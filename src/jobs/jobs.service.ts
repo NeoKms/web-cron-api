@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, FindOptionsSelectByString, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from './entities/job.entity';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
@@ -12,6 +12,7 @@ import CreateJobDto from './dto/create-job.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SshService } from '../ssh/ssh.service';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 
 @Injectable()
 export class JobsService {
@@ -30,15 +31,11 @@ export class JobsService {
       }
     }
     if (params.select?.length) {
-      options.select = params.select.reduce((acc, el) => {
-        acc[el] = true;
-        return acc;
-      }, {});
+      options.select = params.select as FindOptionsSelectByString<Job>;
     }
-    if (Object.entries(params?.whereRaw ?? {})?.length) {
+    if (Object.keys(params?.whereRaw ?? {})?.length) {
       options.where = params.whereRaw;
     }
-    options.where['isDel'] = 0;
     return this.__filter(options);
   }
   async create(dto: CreateJobDto, manager?: EntityManager): Promise<Job> {
@@ -57,7 +54,7 @@ export class JobsService {
     const [job] = await this.__filter(
       {
         where: { id },
-        select: { sshEntityId: true },
+        select: ['sshEntityId'],
       },
       manager,
     );
@@ -95,6 +92,10 @@ export class JobsService {
     options: FindManyOptions<Job>,
     manager?: EntityManager,
   ): Promise<Job[]> {
+    if (!options.where) {
+      options.where = {};
+    }
+    options.where['isDel'] = 0;
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
     return repo.find(options);
   }

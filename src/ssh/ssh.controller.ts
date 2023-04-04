@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -14,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { SshService } from './ssh.service';
 import { Rights } from '../auth/passport/rights.decorator';
-import { MWRDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import { MESSAGE_OK } from '../helpers/constants';
 import ResponseSshDto from './dto/response-ssh.dto';
 import { plainToInstance } from 'class-transformer';
@@ -56,7 +57,7 @@ export class SshController {
     level: 'write',
   })
   @ApiResponse({ type: ResponseSshDto })
-  @Get(':id')
+  @Get('/:id')
   async getById(@Param('id') id: string): Promise<MWRDto<ResponseSshDto>> {
     const result = plainToInstance(
       ResponseSshDto,
@@ -90,7 +91,7 @@ export class SshController {
     level: 'write',
   })
   @ApiResponse({ type: ResponseSshDto })
-  @Patch(':id/')
+  @Patch('/:id')
   async update(
     @Body() updateSshDto: UpdateSshDto,
     @Param('id') id: string,
@@ -100,5 +101,16 @@ export class SshController {
       await this.sshService.update(+id, updateSshDto),
     );
     return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'ssh',
+    level: 'write',
+  })
+  @ApiResponse({ type: ResponseSshDto })
+  @Delete('/:id')
+  async delete(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.sshService.delete(+id);
+    return MESSAGE_OK;
   }
 }

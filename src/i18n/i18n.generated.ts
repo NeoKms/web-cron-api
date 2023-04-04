@@ -18,11 +18,28 @@ export type I18nTranslations = {
             "bad_req": string;
         };
     };
+    "main": {
+        "messages": {
+            "server_port": string;
+            "incoming_req": string;
+        };
+        "doc": {
+            "title": string;
+            "description": string;
+        };
+    };
     "ssh": {
         "errors": {
             "duplicate": string;
             "no_id": string;
             "not_found": string;
+        };
+        "messages": {
+            "start_all_servers": string;
+            "need_add_count": string;
+            "add_server_id": string;
+            "cron_job_start": string;
+            "cron_job_end": string;
         };
     };
     "user": {

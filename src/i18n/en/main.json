@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "server_port": "server running on port {port}",
+    "incoming_req": "incoming request"
+  },
+  "doc": {
+    "title": "Documentation for the system",
+    "description": "API for the cron web interface"
+  }
+}

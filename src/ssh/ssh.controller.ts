@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -56,7 +57,7 @@ export class SshController {
     level: 'write',
   })
   @ApiResponse({ type: ResponseSshDto })
-  @Get(':id')
+  @Get('/:id')
   async getById(@Param('id') id: string): Promise<MWRDto<ResponseSshDto>> {
     const result = plainToInstance(
       ResponseSshDto,
@@ -65,12 +66,6 @@ export class SshController {
     return { ...MESSAGE_OK, result };
   }
 
-  //ToDo only dev feature
-  @Get('/:id/upsert_logs')
-  async upsert_logs(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.sshService.upsertLogs(+id);
-    return MESSAGE_OK;
-  }
   @Rights({
     entity: 'ssh',
     level: 'write',
@@ -96,7 +91,7 @@ export class SshController {
     level: 'write',
   })
   @ApiResponse({ type: ResponseSshDto })
-  @Patch(':id/')
+  @Patch('/:id')
   async update(
     @Body() updateSshDto: UpdateSshDto,
     @Param('id') id: string,
@@ -106,5 +101,16 @@ export class SshController {
       await this.sshService.update(+id, updateSshDto),
     );
     return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'ssh',
+    level: 'write',
+  })
+  @ApiResponse({ type: ResponseSshDto })
+  @Delete('/:id')
+  async delete(@Param('id') id: string): Promise<DefaultMessageDto> {
+    await this.sshService.delete(+id);
+    return MESSAGE_OK;
   }
 }

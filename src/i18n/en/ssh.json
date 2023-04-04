@@ -2,6 +2,15 @@
   "errors": {
     "duplicate": "Connection with this username and host already exists",
     "no_id": "Id field value is not set for update",
-    "not_found": "Connection is not found"
+    "not_found": "Connection is not found",
+    "cannot_delete": "you cannot delete a server to which at least one job is assigned"
+  },
+  "messages": {
+    "start_all_servers": "Initialization of log collection for all servers begins",
+    "need_add_count": "need to add servers: {cnt}",
+    "add_server_id": "log collection schedule for server[{id}] is set",
+    "delete_server_id": "log collection schedule for server[{id}] is deleted",
+    "cron_job_start": "cron task to collect logs for server {id} started",
+    "cron_job_end": "cron task to collect logs for server {id} ended"
   }
 }

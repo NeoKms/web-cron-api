@@ -12,6 +12,8 @@ import * as cookieParser from 'cookie-parser';
 import * as morgan from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from './i18n/i18n.generated';
 
 process.on('uncaughtException', (err) => {
   const logger = new Logger();
@@ -21,6 +23,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
+  const i18n: I18nService<I18nTranslations> = app.get(I18nService);
 
   SentryModule(
     app,
@@ -85,21 +88,21 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(
       app,
       new DocumentBuilder()
-        .setTitle('Документация к системе')
-        .setDescription('API для работы веб интерфейса крона')
+        .setTitle(i18n.t('main.doc.title'))
+        .setDescription(i18n.t('main.doc.description'))
         .setVersion('1.0')
         .build(),
     );
     SwaggerModule.setup('docs', app, document);
   }
 
-  await app
-    .listen(configService.get('PORT'))
-    .then((app) =>
-      logger.debug(
-        `Сервер запущен на порту ${app.address().port}`,
-        'NestApplication',
-      ),
-    );
+  await app.listen(configService.get('PORT')).then((app) =>
+    logger.verbose(
+      i18n.t('main.messages.server_port', {
+        args: { port: app.address().port },
+      }),
+      'NestApplication',
+    ),
+  );
 }
 bootstrap().then().catch();

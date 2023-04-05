@@ -28,7 +28,10 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
   setSentry(sentryKey) {
     if (sentryKey) {
       this.sentryKey = sentryKey;
-      this.logger.verbose(this.i18n.t('main.messages.sentry'));
+      this.logger.verbose(
+        this.i18n.t('main.messages.sentry'),
+        'NestApplication',
+      );
     }
   }
 

@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
@@ -20,8 +19,8 @@ import { Job } from '../jobs/entities/job.entity';
 import { LogService } from '../log/log.service';
 import { CronExpression, SchedulerRegistry, Timeout } from '@nestjs/schedule';
 import { CronJob } from 'cron';
-import Sentry from '@sentry/node';
 import { getNowTimestampSec } from '../helpers/constants';
+import { Logger } from '../helpers/logger';
 @Injectable()
 export class SshService {
   private readonly logger = new Logger(SshService.name);
@@ -87,10 +86,7 @@ export class SshService {
         this.i18n.t('ssh.messages.cron_job_start', { args: { id } }),
       );
       this.serversInProgress.add(id);
-      await this.upsertLogs(id).catch((err) => {
-        this.logger.error(err);
-        Sentry.captureException(err);
-      });
+      await this.upsertLogs(id).catch((err) => this.logger.error(err));
       this.logger.debug(
         this.i18n.t('ssh.messages.cron_job_end', { args: { id } }),
       );

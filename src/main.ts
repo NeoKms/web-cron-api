@@ -5,7 +5,7 @@ import SentryModule from './helpers/sentry';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './helpers/all-exceptions.filter';
 import { RedisService } from 'nestjs-redis';
-import { Logger } from '@nestjs/common';
+import { Logger } from './helpers/logger';
 import * as session from 'express-session';
 import RedisStore from 'connect-redis';
 import * as cookieParser from 'cookie-parser';
@@ -16,7 +16,7 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from './i18n/i18n.generated';
 
 process.on('uncaughtException', (err) => {
-  const logger = new Logger();
+  const logger = new Logger('uncaughtException');
   logger.error(err, 'uncaughtException');
 });
 async function bootstrap() {
@@ -52,7 +52,7 @@ async function bootstrap() {
         {
           stream: {
             write: function (str) {
-              logger.log(str, 'Входящий запрос');
+              logger.log(str, i18n.t('main.messages.incoming_req'));
             },
           },
         },

@@ -10,7 +10,6 @@ import {
   UsePipes,
   ValidationPipe,
   HttpCode,
-  Inject,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -22,7 +21,6 @@ import { DefaultMessageDto } from '../helpers/interfaces/common';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { MESSAGE_OK } from '../helpers/constants';
 import { UserProfile } from '../helpers/decorators/user.decorator';
-import { REQUEST } from '@nestjs/core';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -35,10 +33,7 @@ import { REQUEST } from '@nestjs/core';
   }),
 )
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    @Inject(REQUEST) private readonly request: ReqWithUser,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)

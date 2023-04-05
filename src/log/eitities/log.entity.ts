@@ -5,7 +5,10 @@ import { ContentDto } from '../dto/content.dto';
 export class Log {
   @PrimaryColumn()
   public timestamp_start: number;
-  @ManyToOne(() => Job, (job) => job)
+  @ManyToOne(() => Job, (job) => job, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'jobEntityId' })
   public jobEntity: Job;
   @PrimaryColumn()

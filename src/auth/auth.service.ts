@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
@@ -7,6 +7,7 @@ import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
 import { ReqWithUser } from '../helpers/interfaces/req';
+import { Logger } from '../helpers/logger';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +23,7 @@ export class AuthService {
   }
 
   async deleteAllRedisSessionByUserId(id: number): Promise<void> {
-    this.redisClient
+    await this.redisClient
       .keys('sess:*')
       .then(async (keys) =>
         Promise.all(

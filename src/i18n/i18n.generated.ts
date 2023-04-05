@@ -22,6 +22,7 @@ export type I18nTranslations = {
     messages: {
       server_port: string;
       incoming_req: string;
+      sentry: string;
     };
     doc: {
       title: string;

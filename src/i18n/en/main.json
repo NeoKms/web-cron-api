@@ -1,7 +1,8 @@
 {
   "messages": {
     "server_port": "server running on port {port}",
-    "incoming_req": "incoming request"
+    "incoming_req": "incoming request",
+    "sentry": "sentry service has been initialized"
   },
   "doc": {
     "title": "Documentation for the system",

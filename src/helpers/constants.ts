@@ -101,3 +101,4 @@ export const transliterate = (text: string): string => {
 export const getNowTimestampSec = (): number => {
   return Math.round(Date.now() / 1000);
 };
+export const copyObj = (obj: any) => JSON.parse(JSON.stringify(obj));

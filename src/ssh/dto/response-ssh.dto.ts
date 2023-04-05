@@ -7,17 +7,25 @@ import { IsNumber, IsString } from 'class-validator';
 export default class ResponseSshDto extends PartialType(Ssh) {
   @Expose()
   @IsNumber()
-  public id: number;
+  public id?: number;
   @Expose()
   @IsString()
-  public host: string;
+  public host?: string;
   @Expose()
   @IsNumber()
-  public port: number;
+  public port?: number;
   @Expose()
   @IsString()
-  public username: string;
+  public username?: string;
   @Expose()
   @IsString()
-  public description: string;
+  public description?: string;
+  @Expose()
+  @IsNumber()
+  public cntJobs?: number;
+  @Expose()
+  @IsNumber()
+  public cntJobsActive?: number;
+  @IsNumber()
+  public privateKeyPath?: string;
 }

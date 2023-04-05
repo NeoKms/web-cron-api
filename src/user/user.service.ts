@@ -113,24 +113,20 @@ export class UserService {
   }
 
   async remove(id: number, manager?: EntityManager): Promise<void> {
-    const user = await this.findOne({ id }, manager);
-    user.active = false;
-    user.rights = {};
+    await this.findOne({ id }, manager);
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    await repo.save(user);
+    await repo.update(id, repo.create({ active: false, rights: {} }));
   }
 
   async activate(id: number, manager?: EntityManager): Promise<void> {
-    const user = await this.findOne({ id, onlyActive: false }, manager);
-    user.active = true;
+    await this.findOne({ id, onlyActive: false }, manager);
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    await repo.save(user);
+    await repo.update(id, repo.create({ active: true }));
   }
 
   async unban(id: number, manager?: EntityManager): Promise<void> {
-    const user = await this.findOne({ id, onlyActive: null }, manager);
-    user.banned_to = 0;
+    await this.findOne({ id, onlyActive: null }, manager);
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    await repo.save(user);
+    await repo.update(id, repo.create({ banned_to: 0 }));
   }
 }

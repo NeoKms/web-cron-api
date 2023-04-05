@@ -18,12 +18,12 @@ import { Rights } from '../auth/passport/rights.decorator';
 import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import { MESSAGE_OK } from '../helpers/constants';
 import ResponseSshDto from './dto/response-ssh.dto';
-import { plainToInstance } from 'class-transformer';
 import CreateSshDto from './dto/create-ssh.dto';
 import { UserProfile } from '../helpers/decorators/user.decorator';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { FormDataRequest } from 'nestjs-form-data';
 import UpdateSshDto from './dto/update-ssh.dto';
+import { plainToInstance } from 'class-transformer';
 
 @ApiTags('ssh')
 @Controller('ssh')

@@ -1,11 +1,12 @@
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
+import config from '../config';
 
-export default (app, dsn, prod = false) => {
-  if (dsn !== false) {
+export default (app) => {
+  if (config().SENTRY !== false) {
     Sentry.init({
-      environment: prod ? 'production' : 'develop',
-      dsn,
+      environment: config().PRODUCTION ? 'production' : 'develop',
+      dsn: config().SENTRY as string,
       integrations: [
         new Sentry.Integrations.Http({ breadcrumbs: true, tracing: true }),
         new Tracing.Integrations.Express({ app }),

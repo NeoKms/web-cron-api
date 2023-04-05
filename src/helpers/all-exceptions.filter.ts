@@ -3,19 +3,24 @@ import {
   ArgumentsHost,
   HttpStatus,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { BaseExceptionFilter, HttpAdapterHost } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
 import Sentry from '@sentry/node';
-
-const logger = new Logger();
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
 
 @Catch()
 export class AllExceptionsFilter extends BaseExceptionFilter {
   private sentryKey: string = null;
-
   public httpAdapterHost: HttpAdapterHost = null;
+  private readonly i18n: I18nService<I18nTranslations> = null;
+  private readonly logger = new Logger();
 
+  constructor(i18n: I18nService<I18nTranslations>) {
+    super();
+    this.i18n = i18n;
+  }
   setHttpAdapterHost(httpAdapterHost) {
     this.httpAdapterHost = httpAdapterHost;
   }
@@ -23,7 +28,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
   setSentry(sentryKey) {
     if (sentryKey) {
       this.sentryKey = sentryKey;
-      logger.debug('sentry was init');
+      this.logger.verbose(this.i18n.t('main.messages.sentry'));
     }
   }
 
@@ -33,7 +38,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
     const responseBody = {
-      service: 'AUTH_NEST_API',
+      service: process.env.npm_package_name,
       timestamp: new Date().toISOString().replace('T', ' ').replace('Z', ''),
       route: '',
       statusCode: httpStatus,

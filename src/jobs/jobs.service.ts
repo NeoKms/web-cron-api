@@ -12,7 +12,6 @@ import CreateJobDto from './dto/create-job.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SshService } from '../ssh/ssh.service';
-import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 
 @Injectable()
 export class JobsService {

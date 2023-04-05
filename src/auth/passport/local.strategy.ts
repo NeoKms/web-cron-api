@@ -27,19 +27,19 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     const user = await this.authService.login(username, password, req);
     if (user === -1) {
       throw new UnauthorizedException(
-        await this.i18n.t('auth.errors.ban_login', {
+        this.i18n.t('auth.errors.ban_login', {
           args: { time: 3 + ' ' + this.i18n.t('auth.time.hour') },
         }),
       );
     } else if (user === -2) {
       throw new UnauthorizedException(
-        await this.i18n.t('auth.errors.ban_login', {
+        this.i18n.t('auth.errors.ban_login', {
           args: { time: 1 + ' ' + this.i18n.t('auth.time.day') },
         }),
       );
     } else if (!user) {
       throw new UnauthorizedException(
-        await this.i18n.t('auth.errors.wrong_login_or_password'),
+        this.i18n.t('auth.errors.wrong_login_or_password'),
       );
     }
     return user;

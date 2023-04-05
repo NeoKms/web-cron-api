@@ -25,13 +25,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const i18n: I18nService<I18nTranslations> = app.get(I18nService);
 
-  SentryModule(
-    app,
-    configService.get('SENTRY'),
-    configService.get('PRODUCTION'),
-  );
+  SentryModule(app);
 
-  const filter = new AllExceptionsFilter();
+  const filter = new AllExceptionsFilter(i18n);
   filter.setHttpAdapterHost(app.get(HttpAdapterHost));
   filter.setSentry(configService.get('SENTRY'));
 

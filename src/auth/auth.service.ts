@@ -22,7 +22,7 @@ export class AuthService {
   }
 
   async deleteAllRedisSessionByUserId(id: number): Promise<void> {
-    this.redisClient
+    await this.redisClient
       .keys('sess:*')
       .then(async (keys) =>
         Promise.all(

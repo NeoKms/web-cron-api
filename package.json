@@ -18,7 +18,8 @@
     "migration:up": "npm run typeorm --  migration:run",
     "migration:down": "npm run typeorm -- migration:revert",
     "eslint-fix": "eslint --fix .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^9.4.0",

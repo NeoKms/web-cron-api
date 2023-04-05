@@ -1,14 +1,15 @@
-name: Docker Image
+name: Docker build and push
 on:
   push:
-    branches:
-      - 'main'
     tags:
       - 'v*'
 jobs:
   build-and-push-api:
     runs-on: ubuntu-latest
     steps:
+      - name: Exit if not on production branch
+        if: endsWith(github.event.base_ref, 'main') == false
+        run: exit -1
       - name: Checkout
         uses: actions/checkout@v3
       - name: Docker meta

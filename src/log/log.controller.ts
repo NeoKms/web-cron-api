@@ -19,5 +19,7 @@ import { LogService } from './log.service';
   }),
 )
 export class LogController {
-  constructor(private readonly logService: LogService) {}
+  constructor() {
+    //todo
+  }
 }

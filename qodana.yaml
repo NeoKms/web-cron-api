@@ -5,4 +5,6 @@ exclude:
   - name: All
     paths:
       - .eslintrc.js
+      - app.config.js
+      - .github/
 failThreshold: 1

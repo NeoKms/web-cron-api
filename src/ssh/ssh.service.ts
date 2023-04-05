@@ -25,7 +25,6 @@ import {
   FindManyOptionsAdd,
 } from '../helpers/interfaces/common';
 import ResponseSshDto from './dto/response-ssh.dto';
-import { plainToInstance } from 'class-transformer';
 import { FindOptionsSelect } from 'typeorm/find-options/FindOptionsSelect';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 @Injectable()
@@ -35,6 +34,8 @@ export class SshService {
   private readonly cronJobNameTemplate = 'cronjob_logs_for_server___ID__';
   private readonly defaultAddSelect: additionalSelect<Ssh, ResponseSshDto> = [
     'cntJobs',
+    'cntJobsActive',
+    'privateKeyPath',
   ];
 
   constructor(
@@ -53,9 +54,9 @@ export class SshService {
     );
   }
 
-  private deleteCronJobForServer(id) {
+  private deleteCronJobForServer(id: number) {
     this.schedulerRegistry.deleteCronJob(
-      this.cronJobNameTemplate.replace('__ID__', id),
+      this.cronJobNameTemplate.replace('__ID__', id.toString()),
     );
     this.logger.log(
       this.i18n.t('ssh.messages.delete_server_id', { args: { id } }),
@@ -79,18 +80,18 @@ export class SshService {
   private async setAllServersInSchedule() {
     try {
       this.logger.log(this.i18n.t('ssh.messages.start_all_servers'));
-      const serverIds = await this.__filter({
-        select: {},
-      }).then((res) => res.map((el) => el.id));
+      const serversIds = await this.__filter({
+        select: { id: true },
+        additionalSelect: ['cntJobs', 'privateKeyPath'],
+      })
+        .then((res) => res.filter((s) => s.cntJobsActive > 0))
+        .then((res) => res.map((s) => s.id));
       this.logger.log(
         this.i18n.t('ssh.messages.need_add_count', {
-          args: { cnt: serverIds.length },
+          args: { cnt: serversIds.length },
         }),
       );
-      for (let i = 0, c = serverIds.length; i < c; i++) {
-        const id = serverIds[i];
-        this.setCronJobForServer(id);
-      }
+      serversIds.forEach((id) => this.setCronJobForServer(id));
     } catch (err) {
       this.logger.error(err);
     }
@@ -143,6 +144,7 @@ export class SshService {
     if (!options.additionalSelect && options?.additionalSelect !== false) {
       options.additionalSelect = [];
     }
+    let jobsCntBySshId = null;
     if (
       options?.additionalSelect !== false &&
       !Array.isArray(options.select) &&
@@ -160,15 +162,52 @@ export class SshService {
     }
     options.where['deleted_at'] = IsNull();
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
-    const elements: ResponseSshDto[] = await repo
-      .find(options)
-      .then((res) => plainToInstance(ResponseSshDto, res));
+    const elements: ResponseSshDto[] = await repo.find(options);
     if (options.additionalSelect !== false) {
       for (let i = 0, c = elements.length; i < c; i++) {
         const element = elements[i];
         const isAll = !options?.additionalSelect?.length;
-        if (isAll || options.additionalSelect.includes('cntJobs')) {
-          element.cntJobs = 0;
+        if (
+          isAll ||
+          options.additionalSelect.includes('cntJobs') ||
+          options.additionalSelect.includes('cntJobsActive')
+        ) {
+          if (jobsCntBySshId === null) {
+            jobsCntBySshId = await repo
+              .createQueryBuilder('ssh')
+              .leftJoin(
+                'job',
+                'jobAll',
+                'jobAll.sshEntityId=ssh.id and jobAll.isDel = 0',
+              )
+              .leftJoin(
+                'job',
+                'jobActive',
+                'jobActive.sshEntityId=ssh.id and jobActive.isDel = 0 and jobActive.isActive = 1',
+              )
+              .select([
+                'ssh.id as id',
+                'COUNT(jobAll.id) as jobs',
+                'COUNT(jobActive.id) as jobsActive',
+              ])
+              .groupBy('ssh.id')
+              .getRawMany()
+              .then((res) =>
+                res.reduce((acc, el) => {
+                  acc[el.id] = {
+                    cntJobs: +el.jobs,
+                    cntJobsActive: +el.jobsActive,
+                  };
+                  return acc;
+                }, {}),
+              );
+          }
+          element.cntJobs = jobsCntBySshId[element.id]
+            ? jobsCntBySshId[element.id].cntJobs
+            : 0;
+          element.cntJobsActive = jobsCntBySshId[element.id]
+            ? jobsCntBySshId[element.id].cntJobsActive
+            : 0;
         }
         if (isAll || options.additionalSelect.includes('privateKeyPath')) {
           element.privateKeyPath =
@@ -189,9 +228,17 @@ export class SshService {
       host: sshEntity.host,
       username: sshEntity.username,
       port: sshEntity.port,
-      privateKeyPath: this.configService.get('U_DIRS.keys') + sshEntity.id,
+      privateKeyPath: sshEntity.privateKeyPath,
     });
     await client.setJobs(jobs);
+    const cronJobs = this.schedulerRegistry.getCronJobs();
+    if (
+      !cronJobs.has(
+        this.cronJobNameTemplate.replace('__ID__', sshEntity.id.toString()),
+      )
+    ) {
+      this.setCronJobForServer(sshEntity.id);
+    }
   }
 
   public async create(
@@ -233,18 +280,17 @@ export class SshService {
 
   async delete(id: number, manager?: EntityManager): Promise<void> {
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
-    const res = await repo
-      .createQueryBuilder('ssh')
-      .leftJoin('job', 'job', 'job.sshEntityId=ssh.id and job.isDel = 0')
-      .select(['ssh.id', 'COUNT(job.id) as jobs'])
-      .where('ssh.id = :id', { id })
-      .groupBy('ssh.id')
-      .having('jobs>0')
-      .getRawOne();
-    if (res) {
+    const res = await this.getById(id, manager);
+    if (res.cntJobs > 0) {
       throw new BadRequestException(this.i18n.t('ssh.errors.cannot_delete'));
     }
-    await repo.update(id, repo.create({ deleted_at: getNowTimestampSec() }));
+    await repo.update(
+      id,
+      repo.create({
+        deleted_at: getNowTimestampSec(),
+        updated_at: getNowTimestampSec(),
+      }),
+    );
     this.deleteCronJobForServer(id);
   }
 }

@@ -25,5 +25,7 @@ export default class ResponseSshDto extends PartialType(Ssh) {
   public cntJobs?: number;
   @Expose()
   @IsNumber()
+  public cntJobsActive?: number;
+  @IsNumber()
   public privateKeyPath?: string;
 }

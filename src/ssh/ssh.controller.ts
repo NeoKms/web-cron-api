@@ -23,6 +23,7 @@ import { UserProfile } from '../helpers/decorators/user.decorator';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { FormDataRequest } from 'nestjs-form-data';
 import UpdateSshDto from './dto/update-ssh.dto';
+import { plainToInstance } from 'class-transformer';
 
 @ApiTags('ssh')
 @Controller('ssh')
@@ -44,7 +45,10 @@ export class SshController {
   @ApiResponse({ type: ResponseSshDto, isArray: true })
   @Get()
   async getAll(): Promise<MWRDto<ResponseSshDto[]>> {
-    const result = await this.sshService.getMany();
+    const result = plainToInstance(
+      ResponseSshDto,
+      await this.sshService.getMany(),
+    );
     return { ...MESSAGE_OK, result };
   }
 
@@ -55,7 +59,10 @@ export class SshController {
   @ApiResponse({ type: ResponseSshDto })
   @Get('/:id')
   async getById(@Param('id') id: string): Promise<MWRDto<ResponseSshDto>> {
-    const result = await this.sshService.getById(+id);
+    const result = plainToInstance(
+      ResponseSshDto,
+      await this.sshService.getById(+id),
+    );
     return { ...MESSAGE_OK, result };
   }
 
@@ -72,7 +79,10 @@ export class SshController {
     @UploadedFiles() file,
     @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseSshDto>> {
-    const result = await this.sshService.create(createSshDto, user);
+    const result = plainToInstance(
+      ResponseSshDto,
+      await this.sshService.create(createSshDto, user),
+    );
     return { ...MESSAGE_OK, result };
   }
 
@@ -86,7 +96,10 @@ export class SshController {
     @Body() updateSshDto: UpdateSshDto,
     @Param('id') id: string,
   ): Promise<MWRDto<ResponseSshDto>> {
-    const result = await this.sshService.update(+id, updateSshDto);
+    const result = plainToInstance(
+      ResponseSshDto,
+      await this.sshService.update(+id, updateSshDto),
+    );
     return { ...MESSAGE_OK, result };
   }
 

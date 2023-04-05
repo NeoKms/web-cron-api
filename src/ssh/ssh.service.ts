@@ -232,12 +232,14 @@ export class SshService {
     });
     await client.setJobs(jobs);
     const cronJobs = this.schedulerRegistry.getCronJobs();
-    if (
-      !cronJobs.has(
-        this.cronJobNameTemplate.replace('__ID__', sshEntity.id.toString()),
-      )
-    ) {
+    const cronJobName = this.cronJobNameTemplate.replace(
+      '__ID__',
+      sshEntity.id.toString(),
+    );
+    if (!cronJobs.has(cronJobName) && sshEntity.cntJobsActive > 0) {
       this.setCronJobForServer(sshEntity.id);
+    } else if (cronJobs.has(cronJobName) && sshEntity.cntJobsActive === 0) {
+      this.deleteCronJobForServer(sshEntity.id);
     }
   }
 

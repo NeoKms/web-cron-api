@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { BaseExceptionFilter, HttpAdapterHost } from '@nestjs/core';
-import Sentry from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 

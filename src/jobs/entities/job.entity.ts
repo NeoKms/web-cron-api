@@ -14,7 +14,10 @@ import { Log } from '../../log/eitities/log.entity';
 export class Job {
   @PrimaryGeneratedColumn()
   public id: number;
-  @ManyToOne(() => Ssh, (ssh) => ssh.jobEntities)
+  @ManyToOne(() => Ssh, (ssh) => ssh.jobEntities, {
+    onUpdate: 'CASCADE',
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'sshEntityId' })
   public sshEntity: Ssh;
   @Column()

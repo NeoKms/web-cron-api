@@ -53,12 +53,12 @@ export class JobsService {
     const [job] = await this.__filter(
       {
         where: { id },
-        select: ['sshEntityId'],
+        select: { sshEntityId: true },
       },
       manager,
     );
     const jobs = await this.__filter({
-      select: ['id', 'job', 'time'],
+      select: { id: true, job: true, time: {} },
       where: { sshEntityId: job.sshEntityId, isDel: 0, isActive: 1 },
     });
     return this.sshService.updateJobsOnServer(job.sshEntityId, jobs);
@@ -106,7 +106,7 @@ export class JobsService {
     const [exist] = await this.__filter(
       {
         where: { id, isDel: 0 },
-        select: ['id'],
+        select: { id: true },
       },
       manager,
     );

@@ -1,4 +1,4 @@
-import { ORMConfig } from './index';
+import config from './index';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
-export default new DataSource(ORMConfig as DataSourceOptions);
+export default new DataSource(config().DB as DataSourceOptions);

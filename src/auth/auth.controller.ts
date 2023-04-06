@@ -17,7 +17,7 @@ import { LocalAuthGuard } from './passport/local-auth.guard';
 import { LoggedInGuard } from './passport/logged-in.guard';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DefaultMessageDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { MESSAGE_OK } from '../helpers/constants';
 import { UserProfile } from '../helpers/decorators/user.decorator';
@@ -43,8 +43,8 @@ export class AuthController {
     @UserProfile() user: ResponseUserDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Body() loginDto: LoginDto,
-  ): Promise<{ auth: ResponseUserDto }> {
-    return { auth: user };
+  ): Promise<MWRDto<ResponseUserDto>> {
+    return { ...MESSAGE_OK, result: user };
   }
 
   @UseGuards(LoggedInGuard)
@@ -71,8 +71,8 @@ export class AuthController {
   @Get('/checkLogin')
   async checkLogin(
     @UserProfile() user: ResponseUserDto,
-  ): Promise<{ auth: ResponseUserDto }> {
-    const userObj = await this.authService.checkLogin(user);
-    return { auth: userObj };
+  ): Promise<MWRDto<ResponseUserDto>> {
+    const result = await this.authService.checkLogin(user);
+    return { ...MESSAGE_OK, result };
   }
 }

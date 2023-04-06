@@ -2,7 +2,7 @@
 /dist
 /node_modules
 /upload/*
-
+**/coverage
 # Logs
 logs
 *.log

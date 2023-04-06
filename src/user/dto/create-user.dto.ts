@@ -27,6 +27,11 @@ export class CreateUserDto {
   phone: string;
 
   @Expose()
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @Expose()
   @IsOptional()
   @IsObject()
   @Type(() => RightsDto)
@@ -47,9 +52,7 @@ export class CreateUserDto {
     it.fio = this.fio();
     it.phone = this.phone;
     it.login = `${transliterate(this.surname)}.${transliterate(this.name)}`;
-    it.password_hash = hashPassword(
-      Math.floor(Math.random() * 100000000 + 1).toString(),
-    );
+    it.password_hash = hashPassword(this.password);
     return it;
   }
 }

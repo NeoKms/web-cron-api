@@ -5,7 +5,7 @@ const config: Config = {
   testRegex: '.*\\.spec\\.ts$',
   testEnvironment: 'node',
   verbose: true,
-  bail: 5,
+  bail: 2,
   collectCoverageFrom: [
     'src/**/*.{js,ts}',
     '!**/helpers/**',

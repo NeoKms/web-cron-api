@@ -6,7 +6,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { LogService } from './log.service';
 
 @ApiTags('log')
 @Controller('log')

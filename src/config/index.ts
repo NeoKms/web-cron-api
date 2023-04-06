@@ -22,27 +22,25 @@ export const UPLOAD = checkStaticDirSync(
   env.UPLOAD || resolve(__dirname + '/../../upload') + '/',
 );
 
-export const ORMConfig: TypeOrmModuleOptions = {
-  type: 'mariadb',
-  host: env.DB_HOST,
-  port: parseInt(env.DB_PORT) || 3306,
-  database: env.DB_NAME,
-  username: env.DB_USER,
-  password: env.DB_PASSWORD,
-  entities: ['dist/**/*.entity{.ts,.js}'],
-  synchronize: false,
-  migrationsRun: true,
-  migrations: ['dist/migrations/*{.ts,.js}'],
-  autoLoadEntities: true,
-  logging: ['query', 'error'],
-  logger: 'file',
-};
-
 export default () => ({
   PRODUCTION,
   SENTRY: env.SENTRY || false,
   PORT: parseInt(env.PORT) || 3001,
-  DB: ORMConfig,
+  DB: {
+    type: 'mariadb',
+    host: env.DB_HOST,
+    port: parseInt(env.DB_PORT) || 3306,
+    database: env.DB_NAME,
+    username: env.DB_USER,
+    password: env.DB_PASSWORD,
+    entities: ['dist/**/*.entity{.ts,.js}'],
+    synchronize: false,
+    migrationsRun: true,
+    migrations: ['dist/migrations/*{.ts,.js}'],
+    autoLoadEntities: true,
+    logging: ['query', 'error'],
+    logger: 'file',
+  } as TypeOrmModuleOptions,
   UPLOAD,
   U_DIRS: {
     keys: checkStaticDir(UPLOAD + 'keys/'),

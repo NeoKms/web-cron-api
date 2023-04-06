@@ -63,8 +63,8 @@ describe('App (e2e)', () => {
       password: 'admin',
     };
     const mocUserLoginFailed = {
-      username: 'admin0',
-      password: 'admin',
+      username: 'admin',
+      password: 'admin2',
     };
     it(`[failed][POST] auth/login`, () => {
       return request(app.getHttpServer())

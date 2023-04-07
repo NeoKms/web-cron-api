@@ -7,6 +7,11 @@ export class Logger extends ConsoleLogger {
     super.log(message, context);
   }
 
+  debug(message: any, context?: string) {
+    if (process.env.NODE_ENV === 'test') return;
+    super.debug(message, context);
+  }
+
   error(exception: Error | string, message?: string, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
     const err: Error =

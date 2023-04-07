@@ -9,6 +9,8 @@ import {
   Param,
   Get,
   Delete,
+  Patch,
+  HttpCode,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -37,8 +39,9 @@ export class JobsController {
     entity: 'jobs',
     level: 'read',
   })
+  @HttpCode(200)
   @ApiResponse({ type: ResponseJobDto, isArray: true })
-  @Post('list')
+  @Post('/list')
   async list(@Body() params: FilterJobsDto): Promise<MWRDto<ResponseJobDto[]>> {
     const result = plainToInstance(
       ResponseJobDto,
@@ -66,7 +69,7 @@ export class JobsController {
     level: 'write',
   })
   @ApiResponse({ type: ResponseJobDto })
-  @Post('/:id')
+  @Patch('/:id')
   async update(
     @Body() params: Partial<CreateJobDto>,
     @Param('id') id: string,

@@ -102,3 +102,7 @@ export const getNowTimestampSec = (): number => {
   return Math.round(Date.now() / 1000);
 };
 export const copyObj = (obj: any) => JSON.parse(JSON.stringify(obj));
+
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};

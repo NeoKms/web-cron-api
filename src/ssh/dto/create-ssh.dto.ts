@@ -19,7 +19,7 @@ export default class CreateSshDto extends PartialType(Ssh) {
   @IsNotEmpty()
   public host: string;
   @Expose()
-  @IsNumber()
+  @IsString()
   @IsOptional()
   public port?: number;
   @Expose()

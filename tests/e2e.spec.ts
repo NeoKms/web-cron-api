@@ -440,13 +440,13 @@ describe('App (e2e)', () => {
     });
 
     describe('[log]', () => {
-      // it(
-      //   `[wait] 1m`,
-      //   () => {
-      //     return sleep(1000 * 60);
-      //   },
-      //   1000 * 61,
-      // );
+      it(
+        `[wait] 1m`,
+        () => {
+          return sleep(1000 * 60);
+        },
+        1000 * 61,
+      );
       //toDo get LOG
     });
 

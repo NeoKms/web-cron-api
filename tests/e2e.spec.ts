@@ -10,8 +10,10 @@ import * as cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
 import config from '../src/config';
-import { copyObj, defaultRights } from '../src/helpers/constants';
+import { copyObj, defaultRights, sleep } from '../src/helpers/constants';
 import conDs from '../src/config/ormconfig';
+import * as fs from 'fs';
+import * as process from 'process';
 
 let rootConnection = null;
 const testDbName = `test_${Date.now()}`;
@@ -59,6 +61,40 @@ const mocUserCreate = {
 const mocUserAuthFailed = {
   username: mocUserCreate.login,
   password: mocUserCreate.password + '1',
+};
+const mocSshCreate = {
+  id: null,
+  host: process.env.TEST_HOST,
+  port: +process.env.TEST_PORT,
+  username: process.env.TEST_USERNAME,
+  description: 'test',
+};
+const mocJobCreate = {
+  id: null,
+  sshEntityId: 1,
+  job: 'ls ~',
+  time: {
+    minute: {
+      value: 1,
+      period: true,
+    },
+    hour: {
+      value: -1,
+      period: false,
+    },
+    day: {
+      value: -1,
+      period: false,
+    },
+    month: {
+      value: -1,
+      period: false,
+    },
+    weekDay: {
+      value: -1,
+      period: false,
+    },
+  },
 };
 describe('App (e2e)', () => {
   let app: INestApplication;
@@ -181,11 +217,11 @@ describe('App (e2e)', () => {
           .expect(200)
           .then(({ body }) => {
             const result = checkBody(body);
-            const userInd = result.findIndex(
+            const ind = result.findIndex(
               (e) => e.login === mocUserCreate.login,
             );
-            expect(userInd).not.toBe(-1);
-            mocUserCreate.id = result[userInd].id;
+            expect(ind).not.toBe(-1);
+            mocUserCreate.id = result[ind].id;
           });
       });
       it(`[GET] user/:id`, () => {
@@ -299,6 +335,139 @@ describe('App (e2e)', () => {
           .set(authCookieHeader)
           .expect(200)
           .then(({ body }) => checkBody(body, false));
+      });
+    });
+  });
+
+  describe('{ssh,jobs,log}Controller', () => {
+    describe('[ssh] Create/Update/Read', () => {
+      it(`[POST] ssh`, () => {
+        fs.writeFileSync('./tests/ppk', process.env.TEST_KEY);
+        return request(app.getHttpServer())
+          .post('/ssh')
+          .set(authCookieHeader)
+          .field('host', mocSshCreate.host)
+          .field('port', mocSshCreate.port)
+          .attach('privateKey', fs.createReadStream('./tests/ppk'))
+          .field('username', mocSshCreate.username)
+          .field('description', mocSshCreate.description)
+          .expect(201)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.username).toBe(mocSshCreate.username);
+            mocSshCreate.id = result.id;
+          })
+          .finally(() =>
+            fs.promises.rm('./tests/ppk').catch((err) => err.message),
+          );
+      });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.username).toBe(mocSshCreate.username);
+          });
+      });
+      it(`[PATCH] ssh/:id`, () => {
+        mocSshCreate.description = 'test1';
+        return request(app.getHttpServer())
+          .patch('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .send({
+            description: mocSshCreate.description,
+          })
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.description).toBe(mocSshCreate.description);
+          });
+      });
+      it(`[GET] ssh`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/')
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            const ind = result.findIndex(
+              (e) => e.username === mocSshCreate.username,
+            );
+            expect(ind).not.toBe(-1);
+          });
+      });
+    });
+    describe('[jobs] Create/Update/Read', () => {
+      it(`[POST] job`, () => {
+        return request(app.getHttpServer())
+          .post('/jobs')
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(201)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.job).toBe(mocJobCreate.job);
+            mocJobCreate.id = result.id;
+          });
+      });
+      it(`[PATCH] jobs/:id`, () => {
+        mocJobCreate.job = 'ls ~/';
+        return request(app.getHttpServer())
+          .patch('/jobs/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .send({
+            job: mocJobCreate.job,
+          })
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.job).toBe(mocJobCreate.job);
+          });
+      });
+      it(`[POST] jobs/list`, () => {
+        return request(app.getHttpServer())
+          .post('/jobs/list')
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            const ind = result.findIndex((e) => e.job === mocJobCreate.job);
+            expect(ind).not.toBe(-1);
+          });
+      });
+    });
+
+    describe('[log]', () => {
+      it(
+        `[wait] 1m`,
+        () => {
+          return sleep(1000 * 60);
+        },
+        1000 * 61,
+      );
+      //toDo get LOG
+    });
+
+    describe('[job] Delete', () => {
+      it(`[DELETE] job`, () => {
+        return request(app.getHttpServer())
+          .del('/jobs/' + mocJobCreate.id)
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(200);
+      });
+      it(`[POST] jobs/list`, () => {
+        return request(app.getHttpServer())
+          .post('/jobs/list')
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            const ind = result.findIndex((e) => e.job === mocJobCreate.job);
+            expect(ind).toBe(-1);
+          });
       });
     });
   });

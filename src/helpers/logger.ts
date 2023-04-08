@@ -4,14 +4,12 @@ import * as Sentry from '@sentry/node';
 export class Logger extends ConsoleLogger {
   log(message: any, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
-    super.log(message, context);
+    context ? super.log(message, context) : super.log(message);
   }
-
   debug(message: any, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
-    super.debug(message, context);
+    context ? super.debug(message, context) : super.debug(message);
   }
-
   error(exception: Error | string, message?: string, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
     const err: Error =
@@ -19,6 +17,6 @@ export class Logger extends ConsoleLogger {
     if (config().SENTRY) {
       Sentry.captureException(err);
     }
-    super.error(err.message, err.stack, context);
+    context ? super.error(message, context) : super.error(message);
   }
 }

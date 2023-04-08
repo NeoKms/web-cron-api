@@ -12,6 +12,14 @@ class SshClientFactory {
   private readonly EXPIRED_INTERVAL_MS = 1000 * 60 * 5; // 5 min
   private readonly SSH_CACHE = 1000 * 60 * 60; // 60 min
   private readonly connections: ConnectionList = {};
+
+  public async purgeCache(): Promise<void> {
+    await Promise.all(
+      Object.values(this.connections).map(
+        (el) => el.instance && el.instance.destroy(),
+      ),
+    );
+  }
   public async getSSHInstance(config: SshConfig): Promise<SshClient> {
     const key = `${config.username}:${config.host}`;
     if (this.connections.hasOwnProperty(key)) {

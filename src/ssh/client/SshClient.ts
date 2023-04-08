@@ -15,6 +15,9 @@ export class SshClient {
     this.config = config;
     this.instance = new NodeSSH();
   }
+  public async destroy() {
+    await this.instance.connection.destroy();
+  }
   public async waitConnection(errCnt = 5): Promise<SshClient> {
     return this.instance
       .connect(this.config)

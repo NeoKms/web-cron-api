@@ -14,6 +14,7 @@ import { copyObj, defaultRights, sleep } from '../src/helpers/constants';
 import conDs from '../src/config/ormconfig';
 import * as fs from 'fs';
 import * as process from 'process';
+import SshClientFactory from '../src/ssh/client/SshClientFactory';
 
 let rootConnection = null;
 const testDbName = `test_${Date.now()}`;
@@ -474,6 +475,7 @@ describe('App (e2e)', () => {
 
   afterAll(async () => {
     app && (await app.close());
+    SshClientFactory.purgeCache();
     if (rootConnection) {
       await rootConnection.query(`drop database ${testDbName}`);
       await rootConnection.destroy();

@@ -54,7 +54,7 @@ export class SshController {
 
   @Rights({
     entity: 'ssh',
-    level: 'write',
+    level: 'read',
   })
   @ApiResponse({ type: ResponseSshDto })
   @Get('/:id')

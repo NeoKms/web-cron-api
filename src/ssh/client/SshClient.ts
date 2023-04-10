@@ -24,9 +24,21 @@ export class SshClient {
 
   private getError(error) {
     const text = error.message.toLowerCase();
-    if (text.match('configured authentication methods failed')) {
+    if (text.match(/configured authentication methods failed/gi)) {
       return new InternalServerErrorException(
         this.i18n.t('ssh.errors.auth_ssh', {
+          args: { host: this.config.host },
+        }),
+      );
+    } else if (text.match(/ECONNREFUSED/gi)) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.econnrefused', {
+          args: { host: this.config.host },
+        }),
+      );
+    } else if (text.match(/ENOTFOUND/gi)) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.notfound_remote', {
           args: { host: this.config.host },
         }),
       );
@@ -36,6 +48,8 @@ export class SshClient {
   public async waitConnection(errCnt = 5): Promise<SshClient> {
     return this.instance
       .connect(this.config)
+      .then(() => this.getCronFile())
+      .then(() => this.initWebcronDir())
       .then(() => this)
       .catch((err) => {
         if (errCnt > 0) {
@@ -185,6 +199,9 @@ export class SshClient {
     await Promise.all(promises);
     await Promise.all(jobs.map((job) => this.setJobScript(job)));
     return this.setCronFile(cronFile);
+  }
+  private async initWebcronDir() {
+    return this.execCommand(SshCommands.initWebcronDir);
   }
   private async getCronFile(): Promise<string> {
     return this.execCommand(SshCommands.getCronFile).catch((err) => {

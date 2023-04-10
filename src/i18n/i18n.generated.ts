@@ -36,6 +36,8 @@ export type I18nTranslations = {
       not_found: string;
       cannot_delete: string;
       auth_ssh: string;
+      econnrefused: string;
+      notfound_remote: string;
     };
     messages: {
       start_all_servers: string;

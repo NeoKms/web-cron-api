@@ -77,11 +77,11 @@ export class LogService {
     if (params.filter?.jobId) {
       options.where.jobEntity['id'] = params.filter.jobId;
     }
-    const result = await this.__filter(options, manager);
+    const { data, all } = await this.__filter(options, manager);
     return {
-      data: result.data,
+      data,
       pagination: {
-        all: result.all,
+        all,
         page: options.skip / options.take + 1,
         itemsPerPage: options.take,
       },

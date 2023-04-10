@@ -107,6 +107,7 @@ describe('App (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
+    await fs.promises.writeFile('./tests/ppk', process.env.TEST_KEY);
     await clearTestDb();
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -353,7 +354,6 @@ describe('App (e2e)', () => {
   describe('{ssh,jobs,log}Controller', () => {
     describe('[ssh] Create/Update/Read', () => {
       it(`[POST] ssh`, () => {
-        fs.writeFileSync('./tests/ppk', process.env.TEST_KEY);
         return request(app.getHttpServer())
           .post('/ssh')
           .set(authCookieHeader)
@@ -367,13 +367,9 @@ describe('App (e2e)', () => {
             const result = checkBody(body);
             expect(result.username).toBe(mocSshCreate.username);
             mocSshCreate.id = result.id;
-          })
-          .finally(() =>
-            fs.promises.rm('./tests/ppk').catch((err) => err.message),
-          );
+          });
       });
       it(`[failed][POST] ssh`, () => {
-        fs.writeFileSync('./tests/ppk', process.env.TEST_KEY);
         return request(app.getHttpServer())
           .post('/ssh')
           .set(authCookieHeader)
@@ -382,10 +378,7 @@ describe('App (e2e)', () => {
           .attach('privateKey', fs.createReadStream('./tests/ppk'))
           .field('username', mocSshCreate.username)
           .field('description', mocSshCreate.description)
-          .expect(400)
-          .finally(() =>
-            fs.promises.rm('./tests/ppk').catch((err) => err.message),
-          );
+          .expect(400);
       });
       it(`[GET] ssh/:id`, () => {
         return request(app.getHttpServer())
@@ -637,8 +630,9 @@ describe('App (e2e)', () => {
   });
 
   afterAll(async () => {
+    await fs.promises.rm('./tests/ppk').catch((err) => err.message);
     app && (await app.close());
-    SshClientFactory.purgeCache();
+    await SshClientFactory.purgeCache();
     if (rootConnection) {
       await rootConnection.query(`drop database ${testDbName}`);
       await rootConnection.destroy();

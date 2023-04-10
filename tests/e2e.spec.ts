@@ -143,6 +143,10 @@ describe('App (e2e)', () => {
     await app.init();
   });
 
+  it(`[GET] /`, () => {
+    return request(app.getHttpServer()).get('/').expect(200);
+  });
+
   describe('authController', () => {
     it(`[failed][GET] auth/checkLogin`, () => {
       return request(app.getHttpServer()).get('/auth/checkLogin').expect(403);
@@ -368,6 +372,21 @@ describe('App (e2e)', () => {
             fs.promises.rm('./tests/ppk').catch((err) => err.message),
           );
       });
+      it(`[failed][POST] ssh`, () => {
+        fs.writeFileSync('./tests/ppk', process.env.TEST_KEY);
+        return request(app.getHttpServer())
+          .post('/ssh')
+          .set(authCookieHeader)
+          .field('host', mocSshCreate.host)
+          .field('port', mocSshCreate.port)
+          .attach('privateKey', fs.createReadStream('./tests/ppk'))
+          .field('username', mocSshCreate.username)
+          .field('description', mocSshCreate.description)
+          .expect(400)
+          .finally(() =>
+            fs.promises.rm('./tests/ppk').catch((err) => err.message),
+          );
+      });
       it(`[GET] ssh/:id`, () => {
         return request(app.getHttpServer())
           .get('/ssh/' + mocSshCreate.id)
@@ -444,8 +463,18 @@ describe('App (e2e)', () => {
             expect(ind).not.toBe(-1);
           });
       });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.cntJobs).toBe(1);
+            expect(result.cntJobsActive).toBe(1);
+          });
+      });
     });
-
     describe('[log]', () => {
       it(
         `[wait] 1m`,
@@ -454,7 +483,6 @@ describe('App (e2e)', () => {
         },
         1000 * 61,
       );
-
       it(`[POST] log`, () => {
         return request(app.getHttpServer())
           .post('/log/')
@@ -500,7 +528,53 @@ describe('App (e2e)', () => {
           });
       });
     });
-
+    describe('[job] Deactivate/Activate', () => {
+      it(`[GET] job/:id/deactivate`, () => {
+        return request(app.getHttpServer())
+          .del('/jobs/' + mocJobCreate.id + '/deactivate')
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(200);
+      });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.cntJobs).toBe(1);
+            expect(result.cntJobsActive).toBe(0);
+          });
+      });
+      it(`[GET] job/:id/activate`, () => {
+        return request(app.getHttpServer())
+          .del('/jobs/' + mocJobCreate.id + '/activate')
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(200);
+      });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.cntJobs).toBe(1);
+            expect(result.cntJobsActive).toBe(1);
+          });
+      });
+    });
+    describe('[ssh] Delete failed', () => {
+      it(`[failed][DELETE] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .del('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(400);
+      });
+    });
     describe('[job] Delete', () => {
       it(`[DELETE] job`, () => {
         return request(app.getHttpServer())
@@ -513,12 +587,51 @@ describe('App (e2e)', () => {
         return request(app.getHttpServer())
           .post('/jobs/list')
           .set(authCookieHeader)
+          .send({
+            select: ['job'],
+            options: {
+              itemsPerPage: 10,
+              page: 1,
+            },
+          })
           .expect(200)
           .then(({ body }) => {
             const result = checkBody(body);
             const ind = result.findIndex((e) => e.job === mocJobCreate.job);
             expect(ind).toBe(-1);
           });
+      });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.cntJobs).toBe(0);
+          });
+      });
+      it(`[failed][DELETE] job/55`, () => {
+        return request(app.getHttpServer())
+          .del('/jobs/55')
+          .set(authCookieHeader)
+          .expect(404);
+      });
+    });
+    describe('[ssh] Delete', () => {
+      it(`[DELETE] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .del('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(200);
+      });
+      it(`[failed][DELETE] ssh/55`, () => {
+        return request(app.getHttpServer())
+          .del('/ssh/55')
+          .set(authCookieHeader)
+          .send(mocJobCreate)
+          .expect(404);
       });
     });
   });

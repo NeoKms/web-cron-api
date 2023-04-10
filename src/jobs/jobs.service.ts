@@ -26,7 +26,7 @@ export class JobsService {
   ) {}
 
   async list(params: FilterJobsDto, user: ResponseUserDto): Promise<Job[]> {
-    const options: FindManyOptions<Job> = { where: {} };
+    const options: FindManyOptions<Job> = { where: {}, select: {} };
     if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
       if (params.options?.page) {
@@ -34,10 +34,10 @@ export class JobsService {
       }
     }
     if (params.select?.length) {
-      options.select = params.select as FindOptionsSelect<Job>;
-    }
-    if (Object.keys(params?.whereRaw ?? {})?.length) {
-      options.where = params.whereRaw;
+      options.select = params.select.reduce((acc, el) => {
+        acc[el] = true;
+        return acc;
+      }, {} as FindOptionsSelect<Job>);
     }
     return this.__filter(options, user);
   }

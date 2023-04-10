@@ -1,17 +1,10 @@
-import { CronTimer } from '../jobs';
-
 export interface SshConfig {
   host: string;
   port?: number;
   privateKeyPath: string;
   username: string;
 }
-export interface CronJob {
-  id?: number;
-  time: CronTimer;
-  job: string;
-  logfile: string;
-}
+
 export enum SshCommands {
   getCronFile = 'crontab -l',
   initCronFile = "echo '' > ~/crontabFile",

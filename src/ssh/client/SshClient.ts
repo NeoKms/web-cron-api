@@ -1,8 +1,7 @@
 import { NodeSSH, SSHExecCommandOptions } from 'node-ssh';
-import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
+import { SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
-import * as Sentry from '@sentry/node';
 import { CreateLogDto } from '../../log/dto/create-log.dto';
 import { plainToInstance } from 'class-transformer';
 
@@ -10,7 +9,6 @@ export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
   private readonly config: SshConfig = null;
   private readonly instance: NodeSSH = null;
-  private cronJobs: CronJob[] = [];
   constructor(config: SshConfig) {
     this.config = config;
     this.instance = new NodeSSH();
@@ -47,13 +45,6 @@ export class SshClient {
     await this.execCommand(SshCommands.initCronFile);
     await this.execCommand(SshCommands.applyCronFile);
   }
-  private parseCronTimeElement(el: string): CronTimeElement {
-    const splitted = el.split('/');
-    return {
-      value: +splitted[0],
-      period: splitted.length === 2,
-    };
-  }
 
   private createLogDir(id: number) {
     return this.execCommand(
@@ -67,39 +58,6 @@ export class SshClient {
         .replace('__JOB__', job.job),
     );
   }
-  private parseCronFile(data: string): CronJob[] {
-    return data.split('\n').reduce((jobs, row) => {
-      if (row.match(this.WEB_CRON_MARK)) {
-        const splitted = row.split(' ');
-        try {
-          jobs.push({
-            time: {
-              minute: this.parseCronTimeElement(splitted.shift()),
-              hour: this.parseCronTimeElement(splitted.shift()),
-              day: this.parseCronTimeElement(splitted.shift()),
-              month: this.parseCronTimeElement(splitted.shift()),
-              weekDay: this.parseCronTimeElement(splitted.shift()),
-            },
-            id: +splitted
-              .join(' ')
-              .split('>>')[0]
-              .match(/(?<=\/)\d+(?=.sh)/)[0],
-            job: splitted.join(' ').split('>>')[0].trim(),
-            logfile: splitted.join(' ').split('>>')[1].trim(),
-          });
-        } catch (e) {
-          Sentry.captureException(e);
-        }
-      }
-      return jobs;
-    }, [] as CronJob[]);
-  }
-  public async getCronJobsList(): Promise<CronJob[]> {
-    const cronFile = await this.getCronFile();
-    this.cronJobs = this.parseCronFile(cronFile);
-    return this.cronJobs;
-  }
-
   private createCronJobString(job: Job) {
     const getTime = (timeElement: CronTimeElement): string => {
       return (

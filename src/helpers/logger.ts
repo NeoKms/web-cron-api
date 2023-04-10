@@ -10,13 +10,17 @@ export class Logger extends ConsoleLogger {
     if (process.env.NODE_ENV === 'test') return;
     context ? super.debug(message, context) : super.debug(message);
   }
-  error(exception: Error | string, message?: string, context?: string) {
+  error(exception: Error | string, message = '', context?: string) {
     if (process.env.NODE_ENV === 'test') return;
     const err: Error =
       typeof exception === 'string' ? new Error(exception) : exception;
+    if (message) {
+      err.message = `[${message}]${err.message}`;
+    }
     if (config().SENTRY) {
       Sentry.captureException(err);
     }
-    context ? super.error(message, context) : super.error(message);
+    const errMsg = message ? `[${message}] ${err.stack}` : err.stack;
+    context ? super.error(errMsg, context) : super.error(errMsg);
   }
 }

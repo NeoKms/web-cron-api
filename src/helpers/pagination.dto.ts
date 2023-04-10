@@ -1,14 +1,22 @@
 import { Exclude, Expose } from 'class-transformer';
-import { IsBoolean, IsNumber, IsPositive, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 
 @Exclude()
 export default class PaginationDto {
   @Expose()
+  @IsOptional()
   @IsString({ each: true })
-  public groupBy: Array<string>;
+  public groupBy?: Array<string>;
   @Expose()
+  @IsOptional()
   @IsBoolean({ each: true })
-  public groupDesc: Array<boolean>;
+  public groupDesc?: Array<boolean>;
   @Expose()
   @IsNumber()
   @IsPositive()
@@ -18,9 +26,11 @@ export default class PaginationDto {
   @IsPositive()
   public page: number;
   @Expose()
+  @IsOptional()
   @IsString({ each: true })
-  public sortBy: Array<string>;
+  public sortBy?: Array<string>;
   @Expose()
+  @IsOptional()
   @IsBoolean({ each: true })
-  public sortDesc: Array<boolean>;
+  public sortDesc?: Array<boolean>;
 }

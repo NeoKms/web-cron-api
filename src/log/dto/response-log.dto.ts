@@ -1,5 +1,11 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsNumber, IsObject } from 'class-validator';
+import {
+  IsDefined,
+  IsNotEmptyObject,
+  IsNumber,
+  IsObject,
+  ValidateNested,
+} from 'class-validator';
 import { ContentDto } from './content.dto';
 
 @Exclude()
@@ -13,7 +19,11 @@ export default class ResponseLogDto {
   @Expose()
   @IsNumber()
   status: number;
+  @Expose()
   @IsObject()
+  @ValidateNested()
+  @IsDefined()
+  @IsNotEmptyObject()
   @Type(() => ContentDto)
   content: ContentDto;
   @IsNumber()

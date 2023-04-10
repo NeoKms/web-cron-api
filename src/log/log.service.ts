@@ -5,8 +5,8 @@ import { Log } from './eitities/log.entity';
 import { CreateLogDto } from './dto/create-log.dto';
 import { FindManyOptionsAdd } from '../helpers/interfaces/common';
 import FilterLogDto from './dto/filter.log.dto';
-import { Job } from '../jobs/entities/job.entity';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
+import PaginateDto from '../helpers/paginate.dto';
 @Injectable()
 export class LogService {
   constructor(
@@ -22,12 +22,24 @@ export class LogService {
   private async __filter(
     options: FindManyOptionsAdd<Log>,
     manager?: EntityManager,
-  ): Promise<Log[]> {
+  ): Promise<{ data: Log[]; all: number }> {
     const repo = manager ? manager.getRepository(Log) : this.logRepository;
-    return repo.find(options);
+    const result = { data: [], all: -1 };
+    console.log(options);
+    if (options?.skip > 0) {
+      await repo.findAndCount(options).then(([d, a]) => {
+        result.data = d;
+        result.all = a;
+      });
+    } else {
+      result.data = await repo.find(options);
+    }
+    return result;
   }
 
-  public async list(params: FilterLogDto): Promise<Log[]> {
+  public async list(
+    params: FilterLogDto,
+  ): Promise<{ data: Log[]; pagination: PaginateDto }> {
     const options: FindManyOptionsAdd<Log> = {
       order: { timestamp_start: 'DESC' },
       where: {} as FindOptionsWhere<Log>,
@@ -41,7 +53,10 @@ export class LogService {
       }
     }
     if (params.select?.length) {
-      options.select = params.select as FindOptionsSelectByString<Log>;
+      options.select = params.select.reduce((acc, el) => {
+        acc[el] = true;
+        return acc;
+      }, {});
     }
     if (Object.keys(params?.whereRaw ?? {})?.length) {
       options.where = params.whereRaw;
@@ -49,11 +64,14 @@ export class LogService {
     if (params?.options?.groupBy?.length) {
     }
     options.where['isDel'] = 0;
-    const pagination = {
-      all: 0,
-      page: 1,
-      perPage: 10,
-    }; //toDo
-    return this.__filter(options);
+    const result = await this.__filter(options);
+    return {
+      data: result.data,
+      pagination: {
+        all: result.all,
+        page: options.skip / options.take + 1,
+        itemsPerPage: options.take,
+      },
+    };
   }
 }

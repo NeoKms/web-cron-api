@@ -1,6 +1,13 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { SimpleObject } from '../../helpers/interfaces/common';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsNotEmptyObject,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import PaginationDto from '../../helpers/pagination.dto';
 
 @Exclude()
@@ -18,7 +25,10 @@ export default class FilterLogDto {
   @IsOptional()
   public whereRaw?: SimpleObject;
   @Expose()
-  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @IsDefined()
+  @IsNotEmptyObject()
   @Type(() => PaginationDto)
-  public options?: PaginationDto;
+  public options: PaginationDto;
 }

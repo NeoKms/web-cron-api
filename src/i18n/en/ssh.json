@@ -3,7 +3,8 @@
     "duplicate": "Connection with this username and host already exists",
     "no_id": "Id field value is not set for update",
     "not_found": "Connection is not found",
-    "cannot_delete": "you cannot delete a server to which at least one job is assigned"
+    "cannot_delete": "you cannot delete a server to which at least one job is assigned",
+    "auth_ssh": "[{host}] Server authorization error"
   },
   "messages": {
     "start_all_servers": "Initialization of log collection for all servers begins",

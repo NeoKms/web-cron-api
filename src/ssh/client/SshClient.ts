@@ -4,17 +4,34 @@ import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
 import { CreateLogDto } from '../../log/dto/create-log.dto';
 import { plainToInstance } from 'class-transformer';
+import { InternalServerErrorException } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
   private readonly config: SshConfig = null;
   private readonly instance: NodeSSH = null;
-  constructor(config: SshConfig) {
+  private readonly i18n: I18nService<I18nTranslations> = null;
+  constructor(config: SshConfig, i18n: I18nService<I18nTranslations>) {
     this.config = config;
     this.instance = new NodeSSH();
+    this.i18n = i18n;
   }
   public async destroy() {
     await this.instance.connection.destroy();
+  }
+
+  private getError(error) {
+    const text = error.message.toLowerCase();
+    if (text.match('configured authentication methods failed')) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.auth_ssh', {
+          args: { host: this.config.host },
+        }),
+      );
+    }
+    return error;
   }
   public async waitConnection(errCnt = 5): Promise<SshClient> {
     return this.instance
@@ -24,7 +41,7 @@ export class SshClient {
         if (errCnt > 0) {
           return this.waitConnection(--errCnt);
         } else {
-          throw err;
+          throw this.getError(new Error(err.message));
         }
       });
   }

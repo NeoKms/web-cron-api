@@ -14,6 +14,7 @@ import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from './i18n/i18n.generated';
+import SshClientFactory from './ssh/client/SshClientFactory';
 
 process.on('uncaughtException', (err) => {
   const logger = new Logger('uncaughtException');
@@ -24,6 +25,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const i18n: I18nService<I18nTranslations> = app.get(I18nService);
+
+  SshClientFactory.setI18n(i18n);
 
   SentryModule(app);
 

@@ -14,10 +14,6 @@ export default class FilterJobsDto {
   @IsOptional()
   public filter?: SimpleObject;
   @Expose()
-  @IsObject()
-  @IsOptional()
-  public whereRaw?: SimpleObject;
-  @Expose()
   @IsOptional()
   @Type(() => PaginationDto)
   public options?: PaginationDto;

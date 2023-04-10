@@ -21,6 +21,8 @@ import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import ResponseJobDto from './dto/response-job.dto';
 import { plainToInstance } from 'class-transformer';
 import CreateJobDto from './dto/create-job.dto';
+import { UserProfile } from '../helpers/decorators/user.decorator';
+import { ResponseUserDto } from '../user/dto/response-user.dto';
 
 @ApiTags('jobs')
 @Controller('jobs')
@@ -42,10 +44,13 @@ export class JobsController {
   @HttpCode(200)
   @ApiResponse({ type: ResponseJobDto, isArray: true })
   @Post('/list')
-  async list(@Body() params: FilterJobsDto): Promise<MWRDto<ResponseJobDto[]>> {
+  async list(
+    @Body() params: FilterJobsDto,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseJobDto[]>> {
     const result = plainToInstance(
       ResponseJobDto,
-      await this.jobsService.list(params),
+      await this.jobsService.list(params, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -56,10 +61,13 @@ export class JobsController {
   })
   @ApiResponse({ type: ResponseJobDto })
   @Post('')
-  async create(@Body() params: CreateJobDto): Promise<MWRDto<ResponseJobDto>> {
+  async create(
+    @Body() params: CreateJobDto,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseJobDto>> {
     const result = plainToInstance(
       ResponseJobDto,
-      await this.jobsService.create(params),
+      await this.jobsService.create(params, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -73,10 +81,11 @@ export class JobsController {
   async update(
     @Body() params: Partial<CreateJobDto>,
     @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseJobDto>> {
     const result = plainToInstance(
       ResponseJobDto,
-      await this.jobsService.update(+id, params),
+      await this.jobsService.update(+id, params, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -86,8 +95,11 @@ export class JobsController {
     level: 'write',
   })
   @Get('/:id/activate')
-  async activate(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.jobsService.updateStatus(+id, 1);
+  async activate(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.jobsService.updateStatus(+id, 1, user);
     return MESSAGE_OK;
   }
 
@@ -96,8 +108,11 @@ export class JobsController {
     level: 'write',
   })
   @Get('/:id/deactivate')
-  async deactivate(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.jobsService.updateStatus(+id, 0);
+  async deactivate(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.jobsService.updateStatus(+id, 0, user);
     return MESSAGE_OK;
   }
 
@@ -106,8 +121,11 @@ export class JobsController {
     level: 'write',
   })
   @Delete('/:id')
-  async delete(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.jobsService.delete(+id);
+  async delete(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.jobsService.delete(+id, user);
     return MESSAGE_OK;
   }
 }

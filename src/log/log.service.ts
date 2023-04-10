@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EntityManager, FindOptionsSelectByString, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Log } from './eitities/log.entity';
 import { CreateLogDto } from './dto/create-log.dto';
@@ -7,6 +7,7 @@ import { FindManyOptionsAdd } from '../helpers/interfaces/common';
 import FilterLogDto from './dto/filter.log.dto';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import PaginateDto from '../helpers/paginate.dto';
+import { ResponseUserDto } from '../user/dto/response-user.dto';
 @Injectable()
 export class LogService {
   constructor(
@@ -24,9 +25,8 @@ export class LogService {
     manager?: EntityManager,
   ): Promise<{ data: Log[]; all: number }> {
     const repo = manager ? manager.getRepository(Log) : this.logRepository;
-    const result = { data: [], all: -1 };
-    console.log(options);
-    if (options?.skip > 0) {
+    const result = { data: [], all: 0 };
+    if (options?.skip >= 0) {
       await repo.findAndCount(options).then(([d, a]) => {
         result.data = d;
         result.all = a;
@@ -39,13 +39,23 @@ export class LogService {
 
   public async list(
     params: FilterLogDto,
+    user: ResponseUserDto,
+    manager?: EntityManager,
   ): Promise<{ data: Log[]; pagination: PaginateDto }> {
     const options: FindManyOptionsAdd<Log> = {
       order: { timestamp_start: 'DESC' },
-      where: {} as FindOptionsWhere<Log>,
       take: 10,
       skip: 0,
     };
+    options.where = {
+      jobEntity: {
+        sshEntity: {
+          userEntity: {
+            id: user.id,
+          },
+        },
+      },
+    } as FindOptionsWhere<Log>;
     if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
       if (params.options?.page) {
@@ -58,13 +68,16 @@ export class LogService {
         return acc;
       }, {});
     }
-    if (Object.keys(params?.whereRaw ?? {})?.length) {
-      options.where = params.whereRaw;
-    }
     if (params?.options?.groupBy?.length) {
+      //toDo set Group
     }
-    options.where['isDel'] = 0;
-    const result = await this.__filter(options);
+    if (params.filter?.sshId) {
+      options.where.jobEntity['sshEntity'].id = params.filter.sshId;
+    }
+    if (params.filter?.jobId) {
+      options.where.jobEntity['id'] = params.filter.jobId;
+    }
+    const result = await this.__filter(options, manager);
     return {
       data: result.data,
       pagination: {

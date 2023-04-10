@@ -22,10 +22,6 @@ export default class FilterLogDto {
   public filter?: SimpleObject;
   @Expose()
   @IsObject()
-  @IsOptional()
-  public whereRaw?: SimpleObject;
-  @Expose()
-  @IsObject()
   @ValidateNested()
   @IsDefined()
   @IsNotEmptyObject()

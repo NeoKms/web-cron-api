@@ -44,10 +44,12 @@ export class SshController {
   })
   @ApiResponse({ type: ResponseSshDto, isArray: true })
   @Get()
-  async getAll(): Promise<MWRDto<ResponseSshDto[]>> {
+  async getAll(
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseSshDto[]>> {
     const result = plainToInstance(
       ResponseSshDto,
-      await this.sshService.getMany(),
+      await this.sshService.getMany(user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -58,10 +60,13 @@ export class SshController {
   })
   @ApiResponse({ type: ResponseSshDto })
   @Get('/:id')
-  async getById(@Param('id') id: string): Promise<MWRDto<ResponseSshDto>> {
+  async getById(
+    @UserProfile() user: ResponseUserDto,
+    @Param('id') id: string,
+  ): Promise<MWRDto<ResponseSshDto>> {
     const result = plainToInstance(
       ResponseSshDto,
-      await this.sshService.getById(+id),
+      await this.sshService.getById(+id, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -95,10 +100,11 @@ export class SshController {
   async update(
     @Body() updateSshDto: UpdateSshDto,
     @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseSshDto>> {
     const result = plainToInstance(
       ResponseSshDto,
-      await this.sshService.update(+id, updateSshDto),
+      await this.sshService.update(+id, updateSshDto, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -109,8 +115,11 @@ export class SshController {
   })
   @ApiResponse({ type: ResponseSshDto })
   @Delete('/:id')
-  async delete(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.sshService.delete(+id);
+  async delete(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.sshService.delete(+id, user);
     return MESSAGE_OK;
   }
 }

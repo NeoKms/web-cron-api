@@ -97,6 +97,12 @@ const mocJobCreate = {
     },
   },
 };
+const mocOptions = {
+  options: {
+    page: 1,
+    itemsPerPage: 10,
+  },
+};
 describe('App (e2e)', () => {
   let app: INestApplication;
 
@@ -448,7 +454,51 @@ describe('App (e2e)', () => {
         },
         1000 * 61,
       );
-      //toDo get LOG
+
+      it(`[POST] log`, () => {
+        return request(app.getHttpServer())
+          .post('/log/')
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result).toHaveProperty('pagination');
+            expect(result).toHaveProperty('data');
+            expect(result?.data?.length).toBeGreaterThan(0);
+            expect(result?.pagination?.all).toBeGreaterThan(0);
+          });
+      });
+
+      it(`[POST] log/:sshId`, () => {
+        return request(app.getHttpServer())
+          .post('/log/' + mocSshCreate.id)
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result).toHaveProperty('pagination');
+            expect(result).toHaveProperty('data');
+            expect(result?.data?.length).toBeGreaterThan(0);
+            expect(result?.pagination?.all).toBeGreaterThan(0);
+          });
+      });
+
+      it(`[POST] log/:sshId/:jobId`, () => {
+        return request(app.getHttpServer())
+          .post('/log/' + mocSshCreate.id + '/' + mocJobCreate.id)
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result).toHaveProperty('pagination');
+            expect(result).toHaveProperty('data');
+            expect(result?.data?.length).toBeGreaterThan(0);
+            expect(result?.pagination?.all).toBeGreaterThan(0);
+          });
+      });
     });
 
     describe('[job] Delete', () => {

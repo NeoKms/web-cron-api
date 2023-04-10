@@ -12,7 +12,6 @@ export const rights: rightsType = {
   write: 2,
 };
 export const defaultRights = {
-  servers: rights.deny,
   logs: rights.deny,
   jobs: rights.deny,
   users: rights.deny,

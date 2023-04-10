@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EntityManager, FindOptionsSelectByString, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from './entities/job.entity';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
@@ -12,6 +12,9 @@ import CreateJobDto from './dto/create-job.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SshService } from '../ssh/ssh.service';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
+import { ResponseUserDto } from '../user/dto/response-user.dto';
+import { FindOptionsSelect } from 'typeorm/find-options/FindOptionsSelect';
 
 @Injectable()
 export class JobsService {
@@ -22,7 +25,7 @@ export class JobsService {
     private readonly sshService: SshService,
   ) {}
 
-  async list(params: FilterJobsDto): Promise<Job[]> {
+  async list(params: FilterJobsDto, user: ResponseUserDto): Promise<Job[]> {
     const options: FindManyOptions<Job> = { where: {} };
     if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
@@ -31,25 +34,30 @@ export class JobsService {
       }
     }
     if (params.select?.length) {
-      options.select = params.select as FindOptionsSelectByString<Job>;
+      options.select = params.select as FindOptionsSelect<Job>;
     }
     if (Object.keys(params?.whereRaw ?? {})?.length) {
       options.where = params.whereRaw;
     }
-    return this.__filter(options);
+    return this.__filter(options, user);
   }
 
-  async create(dto: CreateJobDto, manager?: EntityManager): Promise<Job> {
+  async create(
+    dto: CreateJobDto,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<Job> {
     const newJob = dto.toEntity();
     const job = await (manager
       ? manager.save(Job, newJob)
       : this.jobRepository.save(newJob));
-    await this.updateJobsOnServer(job.sshEntityId, manager);
+    await this.updateJobsOnServer(job.sshEntityId, user, manager);
     return job;
   }
 
   private async updateJobsOnServer(
     sshId: number,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<void> {
     const jobs = await this.__filter(
@@ -57,59 +65,70 @@ export class JobsService {
         select: { id: true, job: true, time: {} },
         where: { sshEntityId: sshId, isDel: 0, isActive: 1 },
       },
+      user,
       manager,
     );
-    return this.sshService.updateJobsOnServer(sshId, jobs, manager);
+    return this.sshService.updateJobsOnServer(sshId, jobs, user, manager);
   }
 
   async updateStatus(
     id: number,
     status: 0 | 1,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<void> {
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    await this.checkExist(id, true, manager);
+    await this.checkExist(id, user, true, manager);
     await repo.update(id, repo.create({ isActive: status }));
     const [job] = await this.__filter(
       {
         where: { id },
         select: { sshEntityId: true },
       },
+      user,
       manager,
     );
-    await this.updateJobsOnServer(job.sshEntityId, manager);
+    await this.updateJobsOnServer(job.sshEntityId, user, manager);
   }
 
   async update(
     id: number,
     dto: Partial<CreateJobDto>,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ) {
     if (!Object.keys(dto).length) {
       throw new BadRequestException(this.i18n.t('job.errors.bad_req'));
     }
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    await this.checkExist(id, true, manager);
+    await this.checkExist(id, user, true, manager);
     await repo.update(id, repo.create(dto));
-    const [job] = await this.__filter({ where: { id } });
-    await this.updateJobsOnServer(job.sshEntityId, manager);
+    const [job] = await this.__filter({ where: { id } }, user, manager);
+    await this.updateJobsOnServer(job.sshEntityId, user, manager);
     return job;
   }
 
   private async __filter(
     options: FindManyOptions<Job>,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<Job[]> {
     if (!options.where) {
-      options.where = {};
+      options.where = {} as FindOptionsWhere<Job>;
     }
-    options.where['isDel'] = 0;
+    options.where = Object.assign(options.where, {
+      isDel: 0,
+      sshEntity: {
+        userEntityId: user.id,
+      },
+    } as FindOptionsWhere<Job>);
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
     return repo.find(options);
   }
 
   private async checkExist(
     id: number,
+    user: ResponseUserDto,
     withError = true,
     manager?: EntityManager,
   ): Promise<boolean> {
@@ -118,6 +137,7 @@ export class JobsService {
         where: { id, isDel: 0 },
         select: { id: true },
       },
+      user,
       manager,
     );
     if (!exist && withError) {
@@ -126,19 +146,24 @@ export class JobsService {
     return !!exist;
   }
 
-  async delete(id: number, manager?: EntityManager): Promise<void> {
+  async delete(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<void> {
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;
     const [job] = await this.__filter(
       {
         where: { id },
         select: { sshEntityId: true },
       },
+      user,
       manager,
     );
     if (!job) {
       throw new NotFoundException(this.i18n.t('job.errors.not_found'));
     }
     await repo.update({ id, isDel: 0 }, repo.create({ isDel: 1 }));
-    await this.updateJobsOnServer(job.sshEntityId, manager);
+    await this.updateJobsOnServer(job.sshEntityId, user, manager);
   }
 }

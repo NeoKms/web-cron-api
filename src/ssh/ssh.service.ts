@@ -47,9 +47,13 @@ export class SshService {
     private readonly logService: LogService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
-  async getMany(manager?: EntityManager): Promise<ResponseSshDto[]> {
+  async getMany(
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<ResponseSshDto[]> {
     return this.__filter(
       { additionalSelect: copyObj(this.defaultAddSelect) },
+      user,
       manager,
     );
   }
@@ -80,10 +84,13 @@ export class SshService {
   private async setAllServersInSchedule() {
     try {
       this.logger.log(this.i18n.t('ssh.messages.start_all_servers'));
-      const serversIds = await this.__filter({
-        select: { id: true },
-        additionalSelect: ['cntJobs', 'privateKeyPath'],
-      })
+      const serversIds = await this.__filter(
+        {
+          select: { id: true },
+          additionalSelect: ['cntJobs', 'privateKeyPath'],
+        },
+        null,
+      )
         .then((res) => res.filter((s) => s.cntJobsActive > 0))
         .then((res) => res.map((s) => s.id));
       this.logger.log(
@@ -112,7 +119,7 @@ export class SshService {
     };
   }
   private async upsertLogs(id: number) {
-    const sshEntity = await this.getById(id);
+    const sshEntity = await this.getById(id, null);
     const client = await SshClientFactory.getSSHInstance({
       host: sshEntity.host,
       username: sshEntity.username,
@@ -121,9 +128,14 @@ export class SshService {
     });
     await client.upsertLogs(this.logService);
   }
-  async getById(id: number, manager?: EntityManager): Promise<ResponseSshDto> {
+  async getById(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<ResponseSshDto> {
     const [result] = await this.__filter(
       { where: { id }, additionalSelect: copyObj(this.defaultAddSelect) },
+      user,
       manager,
     );
     if (!result) {
@@ -133,6 +145,7 @@ export class SshService {
   }
   private async __filter(
     options: FindManyOptionsAdd<Ssh, ResponseSshDto>,
+    user: ResponseUserDto | null,
     manager?: EntityManager,
   ): Promise<ResponseSshDto[]> {
     if (!options.where) {
@@ -160,7 +173,14 @@ export class SshService {
         options.select.id = true;
       }
     }
-    options.where['deleted_at'] = IsNull();
+    options.where = Object.assign(options.where, {
+      deleted_at: IsNull(),
+    } as FindOptionsWhere<Ssh>);
+    if (user !== null) {
+      options.where = Object.assign(options.where, {
+        userEntityId: user.id,
+      } as FindOptionsWhere<Ssh>);
+    }
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
     const elements: ResponseSshDto[] = await repo.find(options);
     if (options.additionalSelect !== false) {
@@ -221,9 +241,10 @@ export class SshService {
   async updateJobsOnServer(
     id: number,
     jobs: Job[],
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<void> {
-    const sshEntity = await this.getById(id, manager);
+    const sshEntity = await this.getById(id, user, manager);
     const client = await SshClientFactory.getSSHInstance({
       host: sshEntity.host,
       username: sshEntity.username,
@@ -255,6 +276,7 @@ export class SshService {
           select: { id: true },
           where: { username: createSshDto.username, host: createSshDto.host },
         },
+        user,
         manager,
       );
       if (isExist) {
@@ -265,7 +287,7 @@ export class SshService {
         this.configService.get('U_DIRS.keys') + id,
         createSshDto.privateKey.buffer.toString('utf-8'),
       );
-      newSshEntity = await this.getById(id, manager);
+      newSshEntity = await this.getById(id, user, manager);
     });
     return newSshEntity;
   }
@@ -273,16 +295,21 @@ export class SshService {
   async update(
     id: number,
     updateSshDto: UpdateSshDto,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<ResponseSshDto> {
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
     await repo.update(id, updateSshDto.toEntity());
-    return this.getById(id, manager);
+    return this.getById(id, user, manager);
   }
 
-  async delete(id: number, manager?: EntityManager): Promise<void> {
+  async delete(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<void> {
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
-    const res = await this.getById(id, manager);
+    const res = await this.getById(id, user, manager);
     if (res.cntJobs > 0) {
       throw new BadRequestException(this.i18n.t('ssh.errors.cannot_delete'));
     }

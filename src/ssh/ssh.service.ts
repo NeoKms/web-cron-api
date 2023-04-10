@@ -58,23 +58,33 @@ export class SshService {
     );
   }
 
-  private deleteCronJobForServer(id: number) {
-    this.schedulerRegistry.deleteCronJob(
-      this.cronJobNameTemplate.replace('__ID__', id.toString()),
-    );
+  private async initWebCronOnServer(sshEntity: ResponseSshDto) {
+    await SshClientFactory.getSSHInstance({
+      host: sshEntity.host,
+      username: sshEntity.username,
+      port: sshEntity.port,
+      privateKeyPath: sshEntity.privateKeyPath,
+    });
+  }
+  private removeServerFromLogCollectorSchedule(id: number) {
+    const jobs = this.schedulerRegistry.getCronJobs();
+    const jobName = this.cronJobNameTemplate.replace('__ID__', id.toString());
+    if (jobs.has(jobName)) {
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
     this.logger.log(
       this.i18n.t('ssh.messages.delete_server_id', { args: { id } }),
     );
   }
-  private setCronJobForServer(id) {
+  private scheduleLogCollectorForServer(id) {
+    const jobs = this.schedulerRegistry.getCronJobs();
+    const jobName = this.cronJobNameTemplate.replace('__ID__', id);
+    if (jobs.has(jobName)) return;
     const job = new CronJob(
       CronExpression.EVERY_MINUTE,
-      this.serverLogCronJobWrapper(id),
+      this.logCollectorWrapper(id),
     );
-    this.schedulerRegistry.addCronJob(
-      this.cronJobNameTemplate.replace('__ID__', id),
-      job,
-    );
+    this.schedulerRegistry.addCronJob(jobName, job);
     job.start();
     this.logger.log(
       this.i18n.t('ssh.messages.add_server_id', { args: { id } }),
@@ -98,13 +108,13 @@ export class SshService {
           args: { cnt: serversIds.length },
         }),
       );
-      serversIds.forEach((id) => this.setCronJobForServer(id));
+      serversIds.forEach((id) => this.scheduleLogCollectorForServer(id));
     } catch (err) {
       this.logger.error(err);
     }
   }
 
-  private serverLogCronJobWrapper(id) {
+  private logCollectorWrapper(id) {
     return async () => {
       if (this.serversInProgress.has(id)) return;
       this.logger.debug(
@@ -252,15 +262,10 @@ export class SshService {
       privateKeyPath: sshEntity.privateKeyPath,
     });
     await client.setJobs(jobs);
-    const cronJobs = this.schedulerRegistry.getCronJobs();
-    const cronJobName = this.cronJobNameTemplate.replace(
-      '__ID__',
-      sshEntity.id.toString(),
-    );
-    if (!cronJobs.has(cronJobName) && sshEntity.cntJobsActive > 0) {
-      this.setCronJobForServer(sshEntity.id);
-    } else if (cronJobs.has(cronJobName) && sshEntity.cntJobsActive === 0) {
-      this.deleteCronJobForServer(sshEntity.id);
+    if (sshEntity.cntJobsActive > 0) {
+      this.scheduleLogCollectorForServer(sshEntity.id);
+    } else if (sshEntity.cntJobsActive === 0) {
+      this.removeServerFromLogCollectorSchedule(sshEntity.id);
     }
   }
 
@@ -288,6 +293,7 @@ export class SshService {
         createSshDto.privateKey.buffer.toString('utf-8'),
       );
       newSshEntity = await this.getById(id, user, manager);
+      await this.initWebCronOnServer(newSshEntity);
     });
     return newSshEntity;
   }
@@ -296,11 +302,17 @@ export class SshService {
     id: number,
     updateSshDto: UpdateSshDto,
     user: ResponseUserDto,
-    manager?: EntityManager,
+    manager2?: EntityManager,
   ): Promise<ResponseSshDto> {
-    const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
-    await repo.update(id, updateSshDto.toEntity());
-    return this.getById(id, user, manager);
+    let newSshEntity: ResponseSshDto = null;
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
+      await repo.update(id, updateSshDto.toEntity());
+      newSshEntity = await this.getById(id, user, manager);
+      await this.initWebCronOnServer(newSshEntity);
+    });
+    return newSshEntity;
   }
 
   async delete(
@@ -320,6 +332,6 @@ export class SshService {
         updated_at: getNowTimestampSec(),
       }),
     );
-    this.deleteCronJobForServer(id);
+    this.removeServerFromLogCollectorSchedule(id);
   }
 }

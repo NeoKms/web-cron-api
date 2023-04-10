@@ -50,15 +50,6 @@ export class AuthController {
   @UseGuards(LoggedInGuard)
   @ApiResponse({ status: 200 })
   @HttpCode(200)
-  @Post('/logout')
-  async logout(@Req() req: ReqWithUser): Promise<DefaultMessageDto> {
-    await this.authService.logout(req);
-    return MESSAGE_OK;
-  }
-
-  @UseGuards(LoggedInGuard)
-  @ApiResponse({ status: 200 })
-  @HttpCode(200)
   @Get('/logout')
   async logout2(@Req() req: ReqWithUser): Promise<DefaultMessageDto> {
     await this.authService.logout(req);

@@ -1,32 +1,61 @@
 import { NodeSSH, SSHExecCommandOptions } from 'node-ssh';
-import { CronJob, SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
+import { SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
-import * as Sentry from '@sentry/node';
 import { CreateLogDto } from '../../log/dto/create-log.dto';
 import { plainToInstance } from 'class-transformer';
+import { InternalServerErrorException } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
   private readonly config: SshConfig = null;
   private readonly instance: NodeSSH = null;
-  private cronJobs: CronJob[] = [];
-  constructor(config: SshConfig) {
+  private readonly i18n: I18nService<I18nTranslations> = null;
+  constructor(config: SshConfig, i18n: I18nService<I18nTranslations>) {
     this.config = config;
     this.instance = new NodeSSH();
+    this.i18n = i18n;
   }
   public async destroy() {
     await this.instance.connection.destroy();
   }
+
+  private getError(error) {
+    const text = error.message.toLowerCase();
+    if (text.match(/configured authentication methods failed/gi)) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.auth_ssh', {
+          args: { host: this.config.host },
+        }),
+      );
+    } else if (text.match(/ECONNREFUSED/gi)) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.econnrefused', {
+          args: { host: this.config.host },
+        }),
+      );
+    } else if (text.match(/ENOTFOUND/gi)) {
+      return new InternalServerErrorException(
+        this.i18n.t('ssh.errors.notfound_remote', {
+          args: { host: this.config.host },
+        }),
+      );
+    }
+    return error;
+  }
   public async waitConnection(errCnt = 5): Promise<SshClient> {
     return this.instance
       .connect(this.config)
+      .then(() => this.getCronFile())
+      .then(() => this.initWebcronDir())
       .then(() => this)
       .catch((err) => {
         if (errCnt > 0) {
           return this.waitConnection(--errCnt);
         } else {
-          throw err;
+          throw this.getError(new Error(err.message));
         }
       });
   }
@@ -47,13 +76,6 @@ export class SshClient {
     await this.execCommand(SshCommands.initCronFile);
     await this.execCommand(SshCommands.applyCronFile);
   }
-  private parseCronTimeElement(el: string): CronTimeElement {
-    const splitted = el.split('/');
-    return {
-      value: +splitted[0],
-      period: splitted.length === 2,
-    };
-  }
 
   private createLogDir(id: number) {
     return this.execCommand(
@@ -67,39 +89,6 @@ export class SshClient {
         .replace('__JOB__', job.job),
     );
   }
-  private parseCronFile(data: string): CronJob[] {
-    return data.split('\n').reduce((jobs, row) => {
-      if (row.match(this.WEB_CRON_MARK)) {
-        const splitted = row.split(' ');
-        try {
-          jobs.push({
-            time: {
-              minute: this.parseCronTimeElement(splitted.shift()),
-              hour: this.parseCronTimeElement(splitted.shift()),
-              day: this.parseCronTimeElement(splitted.shift()),
-              month: this.parseCronTimeElement(splitted.shift()),
-              weekDay: this.parseCronTimeElement(splitted.shift()),
-            },
-            id: +splitted
-              .join(' ')
-              .split('>>')[0]
-              .match(/(?<=\/)\d+(?=.sh)/)[0],
-            job: splitted.join(' ').split('>>')[0].trim(),
-            logfile: splitted.join(' ').split('>>')[1].trim(),
-          });
-        } catch (e) {
-          Sentry.captureException(e);
-        }
-      }
-      return jobs;
-    }, [] as CronJob[]);
-  }
-  public async getCronJobsList(): Promise<CronJob[]> {
-    const cronFile = await this.getCronFile();
-    this.cronJobs = this.parseCronFile(cronFile);
-    return this.cronJobs;
-  }
-
   private createCronJobString(job: Job) {
     const getTime = (timeElement: CronTimeElement): string => {
       return (
@@ -210,6 +199,9 @@ export class SshClient {
     await Promise.all(promises);
     await Promise.all(jobs.map((job) => this.setJobScript(job)));
     return this.setCronFile(cronFile);
+  }
+  private async initWebcronDir() {
+    return this.execCommand(SshCommands.initWebcronDir);
   }
   private async getCronFile(): Promise<string> {
     return this.execCommand(SshCommands.getCronFile).catch((err) => {

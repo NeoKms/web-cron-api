@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from './entities/job.entity';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
@@ -23,10 +23,11 @@ export class JobsService {
     private readonly jobRepository: Repository<Job>,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly sshService: SshService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async list(params: FilterJobsDto, user: ResponseUserDto): Promise<Job[]> {
-    const options: FindManyOptions<Job> = { where: {} };
+    const options: FindManyOptions<Job> = { where: {}, select: {} };
     if (params.options?.itemsPerPage) {
       options.take = params.options.itemsPerPage;
       if (params.options?.page) {
@@ -34,10 +35,10 @@ export class JobsService {
       }
     }
     if (params.select?.length) {
-      options.select = params.select as FindOptionsSelect<Job>;
-    }
-    if (Object.keys(params?.whereRaw ?? {})?.length) {
-      options.where = params.whereRaw;
+      options.select = params.select.reduce((acc, el) => {
+        acc[el] = true;
+        return acc;
+      }, {} as FindOptionsSelect<Job>);
     }
     return this.__filter(options, user);
   }
@@ -45,14 +46,22 @@ export class JobsService {
   async create(
     dto: CreateJobDto,
     user: ResponseUserDto,
-    manager?: EntityManager,
+    manager2?: EntityManager,
   ): Promise<Job> {
+    let newJobSavedEntity = {} as Job;
     const newJob = dto.toEntity();
-    const job = await (manager
-      ? manager.save(Job, newJob)
-      : this.jobRepository.save(newJob));
-    await this.updateJobsOnServer(job.sshEntityId, user, manager);
-    return job;
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      newJobSavedEntity = await (manager
+        ? manager.save(Job, newJob)
+        : this.jobRepository.save(newJob));
+      await this.updateJobsOnServer(
+        newJobSavedEntity.sshEntityId,
+        user,
+        manager,
+      );
+    });
+    return newJobSavedEntity;
   }
 
   private async updateJobsOnServer(
@@ -75,37 +84,44 @@ export class JobsService {
     id: number,
     status: 0 | 1,
     user: ResponseUserDto,
-    manager?: EntityManager,
+    manager2?: EntityManager,
   ): Promise<void> {
-    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    await this.checkExist(id, user, true, manager);
-    await repo.update(id, repo.create({ isActive: status }));
-    const [job] = await this.__filter(
-      {
-        where: { id },
-        select: { sshEntityId: true },
-      },
-      user,
-      manager,
-    );
-    await this.updateJobsOnServer(job.sshEntityId, user, manager);
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+      await this.checkExist(id, user, true, manager);
+      await repo.update(id, repo.create({ isActive: status }));
+      const [job] = await this.__filter(
+        {
+          where: { id },
+          select: { sshEntityId: true },
+        },
+        user,
+        manager,
+      );
+      await this.updateJobsOnServer(job.sshEntityId, user, manager);
+    });
   }
 
   async update(
     id: number,
     dto: Partial<CreateJobDto>,
     user: ResponseUserDto,
-    manager?: EntityManager,
-  ) {
+    manager2?: EntityManager,
+  ): Promise<Job> {
     if (!Object.keys(dto).length) {
       throw new BadRequestException(this.i18n.t('job.errors.bad_req'));
     }
-    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    await this.checkExist(id, user, true, manager);
-    await repo.update(id, repo.create(dto));
-    const [job] = await this.__filter({ where: { id } }, user, manager);
-    await this.updateJobsOnServer(job.sshEntityId, user, manager);
-    return job;
+    let jobSaved = {} as Job;
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+      await this.checkExist(id, user, true, manager);
+      await repo.update(id, repo.create(dto));
+      [jobSaved] = await this.__filter({ where: { id } }, user, manager);
+      await this.updateJobsOnServer(jobSaved.sshEntityId, user, manager);
+    });
+    return jobSaved;
   }
 
   private async __filter(
@@ -149,21 +165,24 @@ export class JobsService {
   async delete(
     id: number,
     user: ResponseUserDto,
-    manager?: EntityManager,
+    manager2?: EntityManager,
   ): Promise<void> {
-    const repo = manager ? manager.getRepository(Job) : this.jobRepository;
-    const [job] = await this.__filter(
-      {
-        where: { id },
-        select: { sshEntityId: true },
-      },
-      user,
-      manager,
-    );
-    if (!job) {
-      throw new NotFoundException(this.i18n.t('job.errors.not_found'));
-    }
-    await repo.update({ id, isDel: 0 }, repo.create({ isDel: 1 }));
-    await this.updateJobsOnServer(job.sshEntityId, user, manager);
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      const repo = manager ? manager.getRepository(Job) : this.jobRepository;
+      const [job] = await this.__filter(
+        {
+          where: { id },
+          select: { sshEntityId: true },
+        },
+        user,
+        manager,
+      );
+      if (!job) {
+        throw new NotFoundException(this.i18n.t('job.errors.not_found'));
+      }
+      await repo.update({ id, isDel: 0 }, repo.create({ isDel: 1 }));
+      await this.updateJobsOnServer(job.sshEntityId, user, manager);
+    });
   }
 }

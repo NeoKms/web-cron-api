@@ -10,7 +10,7 @@ import { ContentDto } from './content.dto';
 import { Log } from '../eitities/log.entity';
 
 @Exclude()
-export class CreateLogDto {
+export class UpsertLogDto {
   @Expose()
   @IsNumber()
   @Min(1000000000)
@@ -35,6 +35,10 @@ export class CreateLogDto {
   @Expose()
   @IsNumber()
   jobEntityId: number;
+
+  @Expose()
+  @IsNumber()
+  sshEntityId: number;
 
   public toEntity(): Log {
     return new Log(this as Partial<Log>);

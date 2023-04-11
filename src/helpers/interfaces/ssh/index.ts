@@ -1,4 +1,5 @@
 export interface SshConfig {
+  id: number;
   host: string;
   port?: number;
   privateKeyPath: string;
@@ -10,11 +11,12 @@ export enum SshCommands {
   initCronFile = "echo '' > ~/crontabFile",
   applyCronFile = 'crontab ~/crontabFile',
   setCron = "cat<<'EOF'>~/crontabFile\n__JOBS__\nEOF",
-  initWebcronDir = 'mkdir -p ~/webcron/cron_logs/',
+  initWebcronDir = 'mkdir -p ~/webcron/cron_logs/skipped',
   createLogDir = 'mkdir -p ~/webcron/cron_logs/__ID__',
   createJobScript = "cat<<'EOF'>~/webcron/__ID__.sh\nDATE=`date +\\%s`\n__JOB__ >>  ~/webcron/cron_logs/__ID__/$DATE 2> ~/webcron/cron_logs/__ID__/$DATE'_error'\necho \"JendJ=\"`date +\\%s` >> ~/webcron/cron_logs/__ID__/$DATE\nEOF",
   getJobsList = 'ls ~/webcron/cron_logs',
   getJobLogList = 'ls ~/webcron/cron_logs/__ID__',
   getLogFile = 'cat ~/webcron/cron_logs/__ID__/__FILE__',
   delLogFile = 'rm ~/webcron/cron_logs/__ID__/__FILE__',
+  mvToSkipped = 'mv ~/webcron/cron_logs/__ID__/__FILE__ ~/webcron/cron_logs/skipped/__ID_____FILE__',
 }

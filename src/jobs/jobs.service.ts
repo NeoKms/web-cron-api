@@ -14,7 +14,7 @@ import { I18nTranslations } from '../i18n/i18n.generated';
 import { SshService } from '../ssh/ssh.service';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
-import { FindOptionsSelect } from 'typeorm/find-options/FindOptionsSelect';
+import { fillOptionsByParams } from '../helpers/constants';
 
 @Injectable()
 export class JobsService {
@@ -28,18 +28,10 @@ export class JobsService {
 
   async list(params: FilterJobsDto, user: ResponseUserDto): Promise<Job[]> {
     const options: FindManyOptions<Job> = { where: {}, select: {} };
-    if (params.options?.itemsPerPage) {
-      options.take = params.options.itemsPerPage;
-      if (params.options?.page) {
-        options.skip = params.options.itemsPerPage * (params.options.page - 1);
-      }
+    if (params?.select?.length) {
+      options.select['id'] = true;
     }
-    if (params.select?.length) {
-      options.select = params.select.reduce((acc, el) => {
-        acc[el] = true;
-        return acc;
-      }, {} as FindOptionsSelect<Job>);
-    }
+    fillOptionsByParams(params, options);
     return this.__filter(options, user);
   }
 

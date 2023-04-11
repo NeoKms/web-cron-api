@@ -10,6 +10,7 @@ import PaginateDto from '../helpers/paginate.dto';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { LogFind } from '../helpers/interfaces/log';
 import { Logger } from '../helpers/logger';
+import { fillOptionsByParams } from '../helpers/constants';
 @Injectable()
 export class LogService {
   private readonly logger = new Logger(LogService.name);
@@ -125,48 +126,7 @@ export class LogService {
         },
       },
     } as FindOptionsWhere<Log>;
-    if (params.options?.itemsPerPage) {
-      options.take = params.options.itemsPerPage;
-      if (params.options?.hasOwnProperty('page')) {
-        options.skip = params.options.itemsPerPage * (params.options.page - 1);
-        options.skip < 0 && delete options.skip;
-      }
-    }
-    if (params.select?.length) {
-      params.select.forEach((pathProp) =>
-        pathProp.split('.').reduce((acc, prop, ind, arr) => {
-          if (ind === arr.length - 1) {
-            acc[prop] = true;
-          } else if (!acc.hasOwnProperty(prop)) {
-            acc[prop] = {};
-          }
-          return acc[prop];
-        }, options.select),
-      );
-
-      const checkRelationDeep = (relations, select) => {
-        Object.keys(select).forEach((prop) => {
-          if (/Entity$/gi.test(prop)) {
-            if (!relations.hasOwnProperty(prop)) {
-              relations[prop] = {};
-            }
-            if (typeof select[prop] === 'object') {
-              checkRelationDeep(relations[prop], select[prop]);
-            }
-          }
-        });
-      };
-      checkRelationDeep(options.relations, options.select);
-    }
-    if (params?.options?.sortBy?.length) {
-      options.order = params?.options?.sortBy.reduce((acc, prop, ind) => {
-        acc[prop] = 'ASC';
-        if (params.options?.sortDesc?.length >= ind + 1) {
-          acc[prop] = 'DESC';
-        }
-        return acc;
-      }, {});
-    }
+    fillOptionsByParams(params, options);
     if (Object.keys(params?.filter ?? {})?.length) {
       if (params.filter.hasOwnProperty('sshId')) {
         options.where.jobEntity['sshEntity'].id = params.filter.sshId;

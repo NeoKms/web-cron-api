@@ -576,9 +576,8 @@ describe('App (e2e)', () => {
     describe('[job] Deactivate/Activate', () => {
       it(`[GET] job/:id/deactivate`, () => {
         return request(app.getHttpServer())
-          .del('/jobs/' + mocJobCreate.id + '/deactivate')
+          .get('/jobs/' + mocJobCreate.id + '/deactivate')
           .set(authCookieHeader)
-          .send(mocJobCreate)
           .expect(200);
       });
       it(`[GET] ssh/:id`, () => {
@@ -594,9 +593,8 @@ describe('App (e2e)', () => {
       });
       it(`[GET] job/:id/activate`, () => {
         return request(app.getHttpServer())
-          .del('/jobs/' + mocJobCreate.id + '/activate')
+          .get('/jobs/' + mocJobCreate.id + '/activate')
           .set(authCookieHeader)
-          .send(mocJobCreate)
           .expect(200);
       });
       it(`[GET] ssh/:id`, () => {

@@ -152,7 +152,6 @@ export class LogService {
       };
       checkRelationDeep(options.relations, options.select);
     }
-    console.log(JSON.stringify(options, null, 2), params.select);
     if (params?.options?.sortBy?.length) {
       options.order = params?.options?.sortBy.reduce((acc, prop, ind) => {
         acc[prop] = 'ASC';
@@ -174,7 +173,6 @@ export class LogService {
       }
     }
     const { data, all } = await this.__filter(options, manager);
-    console.log(data[0]);
     return {
       data,
       pagination: {

@@ -161,7 +161,7 @@ export class LogService {
         return acc;
       }, {});
     }
-    if (Object.keys(params?.filter)?.length) {
+    if (Object.keys(params?.filter ?? {})?.length) {
       if (params.filter.hasOwnProperty('sshId')) {
         options.where.jobEntity['sshEntity'].id = params.filter.sshId;
       }

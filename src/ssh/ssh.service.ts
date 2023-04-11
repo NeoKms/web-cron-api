@@ -285,6 +285,7 @@ export class SshService {
         manager,
       );
       if (isExist) {
+        //toDo exist in other user
         throw new BadRequestException(this.i18n.t('ssh.errors.duplicate'));
       }
       const { id } = await repo.save(createSshDto.toEntity(user));

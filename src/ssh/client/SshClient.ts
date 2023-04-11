@@ -2,11 +2,12 @@ import { NodeSSH, SSHExecCommandOptions } from 'node-ssh';
 import { SshCommands, SshConfig } from '../../helpers/interfaces/ssh';
 import { CronTimeElement } from '../../helpers/interfaces/jobs';
 import { Job } from '../../jobs/entities/job.entity';
-import { CreateLogDto } from '../../log/dto/create-log.dto';
+import { UpsertLogDto } from '../../log/dto/upsert-log.dto';
 import { plainToInstance } from 'class-transformer';
-import { InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../i18n/i18n.generated';
+import { LogService } from '../../log/log.service';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
@@ -25,19 +26,19 @@ export class SshClient {
   private getError(error) {
     const text = error.message.toLowerCase();
     if (text.match(/configured authentication methods failed/gi)) {
-      return new InternalServerErrorException(
+      return new BadRequestException(
         this.i18n.t('ssh.errors.auth_ssh', {
           args: { host: this.config.host },
         }),
       );
     } else if (text.match(/ECONNREFUSED/gi)) {
-      return new InternalServerErrorException(
+      return new BadRequestException(
         this.i18n.t('ssh.errors.econnrefused', {
           args: { host: this.config.host },
         }),
       );
     } else if (text.match(/ENOTFOUND/gi)) {
-      return new InternalServerErrorException(
+      return new BadRequestException(
         this.i18n.t('ssh.errors.notfound_remote', {
           args: { host: this.config.host },
         }),
@@ -79,14 +80,14 @@ export class SshClient {
 
   private createLogDir(id: number) {
     return this.execCommand(
-      SshCommands.createLogDir.replace('__ID__', id.toString()),
+      SshCommands.createLogDir.replace(/__ID__/gi, id.toString()),
     );
   }
   private setJobScript(job: Job): Promise<string> {
     return this.execCommand(
       SshCommands.createJobScript
-        .replace(/__ID__/g, job.id.toString())
-        .replace('__JOB__', job.job),
+        .replace(/__ID__/gi, job.id.toString())
+        .replace(/__JOB__/gi, job.job),
     );
   }
   private createCronJobString(job: Job) {
@@ -106,7 +107,7 @@ export class SshClient {
     ].join(' ');
   }
 
-  public async upsertLogs(logService) {
+  public async upsertLogs(logService: LogService): Promise<void> {
     const jobIds = await this.execCommand(SshCommands.getJobsList).then(
       (data) =>
         data
@@ -117,7 +118,7 @@ export class SshClient {
     for (let i = 0, c = jobIds.length; i < c; i++) {
       const id = jobIds[i];
       const list = await this.execCommand(
-        SshCommands.getJobLogList.replace('__ID__', id.toString()),
+        SshCommands.getJobLogList.replace(/__ID__/gi, id.toString()),
       );
       const allFiles = list.split('\n').filter((el) => !!el);
       const { logFiles, logErrors } = allFiles.reduce(
@@ -135,33 +136,19 @@ export class SshClient {
         const logFileName = logFiles[i2];
         const [logText, end] = await this.execCommand(
           SshCommands.getLogFile
-            .replace('__ID__', id.toString())
-            .replace('__FILE__', logFileName),
+            .replace(/__ID__/gi, id.toString())
+            .replace(/__FILE__/gi, logFileName),
         ).then((content) => content.split('\nJendJ='));
         const errorFileName = logErrors.find((el) => el.match(logFileName));
         let errorText = '';
         if (errorFileName) {
           errorText = await this.execCommand(
             SshCommands.getLogFile
-              .replace('__ID__', id.toString())
-              .replace('__FILE__', errorFileName),
+              .replace(/__ID__/gi, id.toString())
+              .replace(/__FILE__/gi, errorFileName),
           ).then((t) => t.trim());
         }
-        if (end) {
-          await this.execCommand(
-            SshCommands.delLogFile
-              .replace('__ID__', id.toString())
-              .replace('__FILE__', logFileName),
-          );
-          if (errorFileName) {
-            await this.execCommand(
-              SshCommands.delLogFile
-                .replace('__ID__', id.toString())
-                .replace('__FILE__', errorFileName),
-            );
-          }
-        }
-        const logObj = plainToInstance(CreateLogDto, {
+        const logObj = plainToInstance(UpsertLogDto, {
           timestamp_start: +logFileName,
           timestamp_end: end ? +end : null,
           status: end ? (errorText ? 3 : 2) : 1,
@@ -170,8 +157,25 @@ export class SshClient {
             error: errorText,
           },
           jobEntityId: id,
-        });
-        await logService.create(logObj);
+          sshEntityId: this.config.id,
+        } as UpsertLogDto);
+        const success = await logService.upsert(logObj);
+        if (end) {
+          // del log file
+          await this.execCommand(
+            (success ? SshCommands.delLogFile : SshCommands.mvToSkipped)
+              .replace(/__ID__/gi, id.toString())
+              .replace(/__FILE__/gi, logFileName),
+          );
+          // del error log file
+          if (errorFileName) {
+            await this.execCommand(
+              (success ? SshCommands.delLogFile : SshCommands.mvToSkipped)
+                .replace(/__ID__/gi, id.toString())
+                .replace(/__FILE__/gi, errorFileName),
+            );
+          }
+        }
       }
     }
   }
@@ -213,8 +217,8 @@ export class SshClient {
     });
   }
   private async setCronFile(jobs: string): Promise<string> {
-    return this.execCommand(SshCommands.setCron.replace('__JOBS__', jobs)).then(
-      () => this.execCommand(SshCommands.applyCronFile),
-    );
+    return this.execCommand(
+      SshCommands.setCron.replace(/__JOBS__/gi, jobs),
+    ).then(() => this.execCommand(SshCommands.applyCronFile));
   }
 }

@@ -2,23 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Log } from './eitities/log.entity';
-import { CreateLogDto } from './dto/create-log.dto';
+import { UpsertLogDto } from './dto/upsert-log.dto';
 import { FindManyOptionsAdd } from '../helpers/interfaces/common';
 import FilterLogDto from './dto/filter.log.dto';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import PaginateDto from '../helpers/paginate.dto';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { LogFind } from '../helpers/interfaces/log';
+import { Logger } from '../helpers/logger';
 @Injectable()
 export class LogService {
+  private readonly logger = new Logger(LogService.name);
   constructor(
     @InjectRepository(Log)
     private readonly logRepository: Repository<Log>,
   ) {}
 
-  async create(dto: CreateLogDto, manager?: EntityManager) {
+  async upsert(dto: UpsertLogDto, manager?: EntityManager): Promise<boolean> {
     const repo = manager ? manager.getRepository(Log) : this.logRepository;
-    return repo.save(dto.toEntity());
+    return repo
+      .save(dto.toEntity())
+      .then(() => true)
+      .catch((err) => this.logger.error(err.message))
+      .then(() => false);
   }
 
   private async __filter(

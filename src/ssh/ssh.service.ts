@@ -27,6 +27,9 @@ import {
 import ResponseSshDto from './dto/response-ssh.dto';
 import { FindOptionsSelect } from 'typeorm/find-options/FindOptionsSelect';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
+import { SshClient } from './client/SshClient';
+import { plainToInstance } from 'class-transformer';
+import { UpsertLogDto } from '../log/dto/upsert-log.dto';
 @Injectable()
 export class SshService {
   private readonly logger = new Logger(SshService.name);
@@ -58,8 +61,9 @@ export class SshService {
     );
   }
 
-  private async initWebCronOnServer(sshEntity: ResponseSshDto) {
-    await SshClientFactory.getSSHInstance({
+  private async getSshClient(sshEntity: ResponseSshDto): Promise<SshClient> {
+    return SshClientFactory.getSSHInstance({
+      id: sshEntity.id,
       host: sshEntity.host,
       username: sshEntity.username,
       port: sshEntity.port,
@@ -130,12 +134,7 @@ export class SshService {
   }
   private async upsertLogs(id: number) {
     const sshEntity = await this.getById(id, null);
-    const client = await SshClientFactory.getSSHInstance({
-      host: sshEntity.host,
-      username: sshEntity.username,
-      port: sshEntity.port,
-      privateKeyPath: sshEntity.privateKeyPath,
-    });
+    const client = await this.getSshClient(sshEntity);
     await client.upsertLogs(this.logService);
   }
   async getById(
@@ -255,12 +254,7 @@ export class SshService {
     manager?: EntityManager,
   ): Promise<void> {
     const sshEntity = await this.getById(id, user, manager);
-    const client = await SshClientFactory.getSSHInstance({
-      host: sshEntity.host,
-      username: sshEntity.username,
-      port: sshEntity.port,
-      privateKeyPath: sshEntity.privateKeyPath,
-    });
+    const client = await this.getSshClient(sshEntity);
     await client.setJobs(jobs);
     if (sshEntity.cntJobsActive > 0) {
       this.scheduleLogCollectorForServer(sshEntity.id);
@@ -294,7 +288,7 @@ export class SshService {
         createSshDto.privateKey.buffer.toString('utf-8'),
       );
       newSshEntity = await this.getById(id, user, manager);
-      await this.initWebCronOnServer(newSshEntity);
+      await this.getSshClient(newSshEntity);
     });
     return newSshEntity;
   }
@@ -311,7 +305,7 @@ export class SshService {
       const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
       await repo.update(id, updateSshDto.toEntity());
       newSshEntity = await this.getById(id, user, manager);
-      await this.initWebCronOnServer(newSshEntity);
+      await this.getSshClient(newSshEntity);
     });
     return newSshEntity;
   }

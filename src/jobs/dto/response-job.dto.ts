@@ -1,7 +1,7 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
 import { CronTimerDto } from './cron-timer.dto';
-import { Ssh } from '../../ssh/entities/ssh.entity';
+import ResponseSshDto from '../../ssh/dto/response-ssh.dto';
 
 @Exclude()
 export default class ResponseJobDto {
@@ -21,6 +21,6 @@ export default class ResponseJobDto {
   @IsNumber()
   public sshEntityId: number;
   @Expose()
-  @Type(() => Ssh)
-  public sshEntity: Ssh;
+  @Type(() => ResponseSshDto)
+  public sshEntity: ResponseSshDto;
 }

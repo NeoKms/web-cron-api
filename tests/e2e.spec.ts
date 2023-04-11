@@ -103,6 +103,7 @@ const mocOptions = {
     itemsPerPage: 10,
   },
 };
+const mocLogEntity = { timestamp_start: null };
 describe('App (e2e)', () => {
   let app: INestApplication;
 
@@ -488,6 +489,7 @@ describe('App (e2e)', () => {
             expect(result).toHaveProperty('data');
             expect(result?.data?.length).toBeGreaterThan(0);
             expect(result?.pagination?.all).toBeGreaterThan(0);
+            mocLogEntity.timestamp_start = result.data[0].timestamp_start;
           });
       });
 
@@ -519,6 +521,56 @@ describe('App (e2e)', () => {
             expect(result?.data?.length).toBeGreaterThan(0);
             expect(result?.pagination?.all).toBeGreaterThan(0);
           });
+      });
+
+      it(`[GET] log/:sshId/:jobId/:timestamp_start`, () => {
+        return request(app.getHttpServer())
+          .get(
+            '/log/' +
+              mocSshCreate.id +
+              '/' +
+              mocJobCreate.id +
+              '/' +
+              mocLogEntity.timestamp_start,
+          )
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result).toHaveProperty('content');
+          });
+      });
+
+      it(`[DELETE] log/:sshId/:jobId/:timestamp_start`, () => {
+        return request(app.getHttpServer())
+          .delete(
+            '/log/' +
+              mocSshCreate.id +
+              '/' +
+              mocJobCreate.id +
+              '/' +
+              mocLogEntity.timestamp_start,
+          )
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(200)
+          .then(({ body }) => checkBody(body, false));
+      });
+
+      it(`[failed][GET] log/:sshId/:jobId/:timestamp_start`, () => {
+        return request(app.getHttpServer())
+          .get(
+            '/log/' +
+              mocSshCreate.id +
+              '/' +
+              mocJobCreate.id +
+              '/' +
+              mocLogEntity.timestamp_start,
+          )
+          .set(authCookieHeader)
+          .send(mocOptions)
+          .expect(404);
       });
     });
     describe('[job] Deactivate/Activate', () => {

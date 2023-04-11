@@ -3,6 +3,8 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   Param,
   Post,
@@ -14,11 +16,12 @@ import { Rights } from '../auth/passport/rights.decorator';
 import { LogService } from './log.service';
 import { plainToInstance } from 'class-transformer';
 import { MESSAGE_OK } from '../helpers/constants';
-import { MWRDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import FilterLogDto from './dto/filter.log.dto';
 import { ResponseLogPaginateDto } from './dto/response-log-paginate.dto';
 import { UserProfile } from '../helpers/decorators/user.decorator';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
+import ResponseLogFullDto from './dto/response-log-full.dto';
 
 @ApiTags('log')
 @Controller('log')
@@ -91,6 +94,49 @@ export class LogController {
     const result = plainToInstance(
       ResponseLogPaginateDto,
       await this.logService.list(params, user),
+    );
+    return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'logs',
+    level: 'write',
+  })
+  @HttpCode(200)
+  @ApiResponse({ type: DefaultMessageDto })
+  @Delete('/:sshId/:jobId/:timestamp_start')
+  public async delete(
+    @Param('jobId') jobId: string,
+    @Param('sshId') sshId: string,
+    @Param('timestamp_start') timestamp_start: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.logService.delete(
+      { jobId: +jobId, sshId: +sshId, timestamp_start: +timestamp_start },
+      user,
+    );
+    return MESSAGE_OK;
+  }
+
+  @Rights({
+    entity: 'logs',
+    level: 'read',
+  })
+  @HttpCode(200)
+  @ApiResponse({ type: ResponseLogFullDto })
+  @Get('/:sshId/:jobId/:timestamp_start')
+  public async getById(
+    @Param('jobId') jobId: string,
+    @Param('sshId') sshId: string,
+    @Param('timestamp_start') timestamp_start: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseLogFullDto>> {
+    const result = plainToInstance(
+      ResponseLogFullDto,
+      await this.logService.getOne(
+        { jobId: +jobId, sshId: +sshId, timestamp_start: +timestamp_start },
+        user,
+      ),
     );
     return { ...MESSAGE_OK, result };
   }

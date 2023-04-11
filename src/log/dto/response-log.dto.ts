@@ -1,12 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import {
-  IsDefined,
-  IsNotEmptyObject,
-  IsNumber,
-  IsObject,
-  ValidateNested,
-} from 'class-validator';
-import { ContentDto } from './content.dto';
+import { IsNumber } from 'class-validator';
+import ResponseJobDto from '../../jobs/dto/response-job.dto';
 
 @Exclude()
 export default class ResponseLogDto {
@@ -20,16 +14,6 @@ export default class ResponseLogDto {
   @IsNumber()
   status: number;
   @Expose()
-  @IsObject()
-  @ValidateNested()
-  @IsDefined()
-  @IsNotEmptyObject()
-  @Type(() => ContentDto)
-  content: ContentDto;
-  @IsNumber()
-  @Expose()
-  jobEntityId: number;
-  @IsNumber()
-  @Expose()
-  sshEntityId: number;
+  @Type(() => ResponseJobDto)
+  jobEntity: ResponseJobDto;
 }

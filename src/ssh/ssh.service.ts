@@ -28,7 +28,6 @@ import ResponseSshDto from './dto/response-ssh.dto';
 import { FindOptionsSelect } from 'typeorm/find-options/FindOptionsSelect';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { SshClient } from './client/SshClient';
-import { ContentDto } from '../log/dto/content.dto';
 @Injectable()
 export class SshService {
   private readonly logger = new Logger(SshService.name);

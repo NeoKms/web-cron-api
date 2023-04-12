@@ -1,7 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsDefined,
-  IsEnum,
   IsNotEmptyObject,
   IsNumber,
   IsObject,

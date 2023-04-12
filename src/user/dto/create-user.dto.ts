@@ -1,5 +1,14 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { User } from '../entities/user.entity';
 import { hashPassword, transliterate } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
@@ -8,17 +17,24 @@ import RightsDto from '../../auth/dto/rights.dto';
 export class CreateUserDto {
   @Expose()
   @IsString()
-  @IsNotEmpty()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
   name: string;
 
   @Expose()
-  @IsNotEmpty()
   @IsString()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
   surname: string;
 
   @Expose()
   @IsString()
   @IsOptional()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
   secondname?: string;
 
   @Expose()
@@ -28,13 +44,17 @@ export class CreateUserDto {
 
   @Expose()
   @IsString()
-  @IsNotEmpty()
+  @IsDefined()
+  @MinLength(4)
+  @MaxLength(25)
   password: string;
 
   @Expose()
-  @IsOptional()
-  @IsObject()
   @Type(() => RightsDto)
+  @IsOptional()
+  @IsDefined()
+  @ValidateNested()
+  @IsObject()
   rights: RightsDto;
 
   @Expose()

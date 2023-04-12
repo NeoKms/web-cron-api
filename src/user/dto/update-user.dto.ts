@@ -1,5 +1,13 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { User } from '../entities/user.entity';
 import RightsDto from '../../auth/dto/rights.dto';
 
@@ -8,26 +16,39 @@ export class UpdateUserDto {
   @Expose()
   @Type(() => RightsDto)
   @IsOptional()
+  @IsDefined()
+  @ValidateNested()
+  @IsObject()
   public rights?: RightsDto;
 
   @Expose()
   @IsString()
   @IsOptional()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
   public name?: string;
 
   @Expose()
   @IsString()
   @IsOptional()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
   public surname?: string;
 
   @Expose()
   @IsString()
   @IsOptional()
+  @MinLength(2)
+  @MaxLength(100)
   public secondname?: string;
 
   @Expose()
   @IsString()
   @IsOptional()
+  @MinLength(4)
+  @MaxLength(25)
   public phone?: string;
 
   @Expose()

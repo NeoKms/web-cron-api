@@ -11,7 +11,7 @@ export class User {
   @Column('text')
   public fio: string;
 
-  @Column()
+  @Column({ unique: true })
   public login: string;
 
   @Column()

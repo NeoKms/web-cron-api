@@ -17,13 +17,13 @@ export class Ssh {
   public id: number;
   @Column('text')
   public host: string;
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 22 })
   public port: number;
   @Column('text')
   public username: string;
-  @Column('text')
+  @Column({ type: 'text', default: '' })
   public description: string;
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: Math.round(Date.now() / 1000) })
   public created_at: number;
   @Column({ type: 'int', nullable: true })
   public updated_at: number;

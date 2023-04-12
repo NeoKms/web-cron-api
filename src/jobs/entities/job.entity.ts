@@ -22,9 +22,9 @@ export class Job {
   public sshEntity: Ssh;
   @Column()
   public sshEntityId: number;
-  @Column()
+  @Column({ nullable: false })
   public job: string;
-  @Column({ type: 'json' })
+  @Column({ type: 'json', nullable: false })
   public time: CronTimerDto;
   @Column('tinyint', { default: 1 })
   public isActive: number;

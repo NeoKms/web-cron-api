@@ -3,3 +3,5 @@ export interface LogFind {
   sshId: number;
   timestamp_start: number;
 }
+
+export type LogStatusesType = 1 | 2 | 3;

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { Between, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Log } from './eitities/log.entity';
 import { UpsertLogDto } from './dto/upsert-log.dto';
@@ -128,13 +128,25 @@ export class LogService {
     } as FindOptionsWhere<Log>;
     fillOptionsByParams(params, options);
     if (Object.keys(params?.filter ?? {})?.length) {
-      if (params.filter.hasOwnProperty('sshId')) {
+      if (params.filter.sshId) {
         options.where.jobEntity['sshEntity'].id = params.filter.sshId;
       }
-      if (params.filter.hasOwnProperty('jobId')) {
+      if (params.filter.jobId) {
         options.where.jobEntity['id'] = params.filter.jobId;
       }
-      if (params.filter.hasOwnProperty('timestamp_start')) {
+      if (params.filter.status) {
+        options.where.status = params.filter.status;
+      }
+      if (params.filter.dts && params.filter.dtf) {
+        options.where.timestamp_start = Between(
+          params.filter.dts,
+          params.filter.dtf,
+        );
+      } else if (params.filter.dts) {
+        options.where.timestamp_start = params.filter.dts;
+      } else if (params.filter.dtf) {
+        options.where.timestamp_start = params.filter.dtf;
+      } else if (params.filter.timestamp_start) {
         options.where.timestamp_start = params.filter.timestamp_start;
       }
     }

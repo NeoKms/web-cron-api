@@ -27,11 +27,15 @@ export class JobsService {
   ) {}
 
   async list(params: FilterJobsDto, user: ResponseUserDto): Promise<Job[]> {
-    const options: FindManyOptions<Job> = { where: {}, select: {} };
+    const options: FindManyOptions<Job> = { select: {} };
+    options.where = {} as FindOptionsWhere<Job>;
     if (params?.select?.length) {
       options.select['id'] = true;
     }
     fillOptionsByParams(params, options);
+    if (params?.filter?.sshId) {
+      options.where.sshEntityId = params.filter.sshId;
+    }
     return this.__filter(options, user);
   }
 

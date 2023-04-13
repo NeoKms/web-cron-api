@@ -1,10 +1,12 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsDefined,
+  IsEnum,
   IsNotEmptyObject,
   IsNumber,
   IsObject,
   IsOptional,
+  IsPositive,
   IsString,
   Max,
   Min,
@@ -15,17 +17,15 @@ import { LogStatusesType } from '../../helpers/interfaces/log';
 
 class FilterProps {
   @IsNumber()
-  @Min(1)
+  @IsPositive()
   @IsOptional()
   sshId?: number;
   @IsNumber()
-  @Min(1)
+  @IsPositive()
   @IsOptional()
   jobId?: number;
-  @IsNumber()
   @IsOptional()
-  @Min(1)
-  @Max(3)
+  @IsEnum([1, 2, 3])
   status?: LogStatusesType;
   @IsNumber()
   @Min(1000000000)

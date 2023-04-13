@@ -1,7 +1,18 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Ssh } from '../entities/ssh.entity';
 import { Exclude, Expose } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsIP,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPort,
+  IsPositive,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import {
   HasMimeType,
   IsFile,
@@ -17,18 +28,26 @@ export default class CreateSshDto extends PartialType(Ssh) {
   @Expose()
   @IsString()
   @IsNotEmpty()
+  @MinLength(7)
+  @MaxLength(15)
+  @IsIP(4)
   public host: string;
   @Expose()
-  @IsString()
+  @IsNumber()
+  @IsPositive()
   @IsOptional()
+  @IsDefined()
+  @IsPort()
   public port?: number;
   @Expose()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   public username: string;
   @Expose()
   @IsString()
   @IsOptional()
+  @MaxLength(1000)
   public description?: string;
   @Expose()
   @IsFile()

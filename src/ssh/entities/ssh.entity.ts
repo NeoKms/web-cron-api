@@ -23,7 +23,7 @@ export class Ssh {
   public username: string;
   @Column({ type: 'text', default: '' })
   public description: string;
-  @Column({ type: 'int', default: Math.round(Date.now() / 1000) })
+  @Column({ type: 'int' })
   public created_at: number;
   @Column({ type: 'int', nullable: true })
   public updated_at: number;

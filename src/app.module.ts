@@ -14,6 +14,7 @@ import { SshModule } from './ssh/ssh.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { JobsModule } from './jobs/jobs.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { OrganizationModule } from './organization/organization.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AuthModule,
     SshModule,
     JobsModule,
+    OrganizationModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],

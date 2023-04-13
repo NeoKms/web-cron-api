@@ -12,6 +12,7 @@ import { FindOneUser } from '../helpers/interfaces/user';
 import { I18nService } from 'nestjs-i18n';
 import { SimpleObject } from '../helpers/interfaces/common';
 import { I18nTranslations } from '../i18n/i18n.generated';
+import { getNowTimestampSec } from '../helpers/constants';
 
 @Injectable()
 export class UserService {
@@ -60,7 +61,7 @@ export class UserService {
       };
     }
     if (where.active) {
-      where.banned_to = LessThan(Math.round(Date.now() / 1000));
+      where.banned_to = LessThan(getNowTimestampSec());
     }
     if (id) {
       where.id = id;

@@ -18,7 +18,11 @@ export class Log {
   public isDel: number;
   @Column({ nullable: true })
   public timestamp_end: number;
-  @Column({ type: 'json', nullable: false, default: { text: '', error: '' } })
+  @Column({
+    type: 'json',
+    nullable: false,
+    default: JSON.stringify({ text: '', error: '' }),
+  })
   public content: ContentDto;
   @Column('tinyint', {
     comment: '1=in progress, 2=finish success, 3=finish with error',

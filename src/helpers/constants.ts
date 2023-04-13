@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto';
 import config from '../config';
+import RightsDto from '../auth/dto/rights.dto';
 
 export type rightsType = {
   deny: number;
@@ -11,11 +12,12 @@ export const rights: rightsType = {
   read: 1,
   write: 2,
 };
-export const defaultRights = {
+export const defaultRights: RightsDto = {
   logs: rights.deny,
   jobs: rights.deny,
   users: rights.deny,
   ssh: rights.deny,
+  organization: rights.deny,
 };
 export const MESSAGE_OK = { message: 'ok' };
 

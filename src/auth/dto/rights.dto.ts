@@ -31,4 +31,11 @@ export default class RightsDto {
   @Max(2)
   @IsDefined()
   ssh?: number;
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(2)
+  @IsDefined()
+  organization?: number;
 }

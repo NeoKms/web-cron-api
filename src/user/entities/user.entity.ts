@@ -3,6 +3,7 @@ import {
   Entity,
   ManyToMany,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { defaultRights } from '../../helpers/constants';
@@ -45,11 +46,13 @@ export class User {
   @OneToMany(() => Ssh, (ssh) => ssh.userEntity)
   sshEntities: Ssh;
 
-  @OneToMany(() => Organization, (org) => org.ownerEntity)
-  orgOwnerEntities: Organization;
+  @OneToOne(() => Organization, (org) => org.ownerUserEntity)
+  orgOwnerEntity: Organization;
 
-  @ManyToMany(() => Organization, (org) => org.userEntities)
-  orgEntities: Organization;
+  @ManyToMany(() => Organization, (org) => org.userEntities, { eager: true })
+  orgEntities: Organization[];
+
+  orgSelectedId: number;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

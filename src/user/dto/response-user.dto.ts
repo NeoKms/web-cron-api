@@ -1,6 +1,7 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsObject, IsString } from 'class-validator';
 import RightsDto from '../../auth/dto/rights.dto';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Exclude()
 export class ResponseUserDto {
@@ -36,4 +37,13 @@ export class ResponseUserDto {
   @Expose()
   @IsBoolean()
   public active: boolean;
+
+  @Expose()
+  @IsObject({ each: true })
+  @Type(() => Organization)
+  public orgEntities: Organization[];
+
+  @Expose()
+  @IsNumber()
+  public orgSelectedId: number;
 }

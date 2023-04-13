@@ -2,8 +2,9 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
   ManyToMany,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
@@ -19,18 +20,20 @@ export class Organization {
   @Column({ type: 'int', nullable: false })
   public created_at: number;
 
-  @ManyToOne(() => User, (user) => user.orgOwnerEntities, {
+  @OneToOne(() => User, (user) => user.orgOwnerEntity, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'ownerEntityId' })
-  public ownerEntity: User;
+  @JoinColumn({ name: 'ownerUserEntityId' })
+  public ownerUserEntity: User;
 
   @Column()
-  public ownerEntityId: number;
+  public ownerUserEntityId: number;
 
   @ManyToMany(() => User, (user) => user.orgEntities)
-  userEntities: User;
+  @JoinTable({ name: 'organization_user_list' })
+  public userEntities: User[];
+
   constructor(partial: Partial<Organization>) {
     Object.assign(this, partial);
   }

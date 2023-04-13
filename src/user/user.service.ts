@@ -13,6 +13,7 @@ import { I18nService } from 'nestjs-i18n';
 import { SimpleObject } from '../helpers/interfaces/common';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { getNowTimestampSec } from '../helpers/constants';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
 export class UserService {
@@ -74,11 +75,19 @@ export class UserService {
     }
     const user = await repoUser
       .createQueryBuilder('user')
+      .leftJoin('organization_user_list', 'orgList', 'orgList.userId=user.id')
+      .leftJoinAndMapMany(
+        'user.orgEntities',
+        Organization,
+        'orgSelected',
+        'orgSelected.id=orgList.organizationId',
+      )
       .where(where)
       .getOne();
     if (!user && withoutError !== true) {
       throw new NotFoundException(this.i18n.t('user.errors.not_found'));
     }
+    user.orgSelectedId = user.orgEntities[0].id;
     return user;
   }
 

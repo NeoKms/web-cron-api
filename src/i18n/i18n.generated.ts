@@ -53,6 +53,8 @@ export type I18nTranslations = {
       duplicate_phone: string;
       bad_req: string;
       not_found: string;
+      org_change: string;
+      duplicate_login: string;
     };
   };
 };

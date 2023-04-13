@@ -4,4 +4,5 @@ export interface FindOneUser {
   onlyActive?: boolean;
   withoutError?: boolean;
   login?: string;
+  orgId?: number;
 }

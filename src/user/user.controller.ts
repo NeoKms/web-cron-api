@@ -21,6 +21,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DefaultMessageDto } from '../helpers/interfaces/common';
 import { MWRDto } from '../helpers/interfaces/common';
 import { MESSAGE_OK } from '../helpers/constants';
+import { UserProfile } from '../helpers/decorators/user.decorator';
 
 @ApiTags('user')
 @Controller('user')
@@ -43,10 +44,11 @@ export class UserController {
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
+    @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseUserDto>> {
     const result = plainToInstance(
       ResponseUserDto,
-      await this.userService.create(createUserDto),
+      await this.userService.create(createUserDto, user),
     );
     return { ...MESSAGE_OK, result };
   }
@@ -57,8 +59,10 @@ export class UserController {
   })
   @ApiResponse({ type: ResponseUserDto, isArray: true })
   @Get()
-  async findAll(): Promise<MWRDto<ResponseUserDto[]>> {
-    const userArr = await this.userService.findAll();
+  async findAll(
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseUserDto[]>> {
+    const userArr = await this.userService.findAll(user);
     const result = plainToInstance(ResponseUserDto, userArr);
     return { ...MESSAGE_OK, result };
   }
@@ -69,9 +73,18 @@ export class UserController {
   })
   @ApiResponse({ type: ResponseUserDto })
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<MWRDto<ResponseUserDto>> {
-    const user = await this.userService.findOne({ id: +id, onlyActive: null });
-    const result = plainToInstance(ResponseUserDto, user);
+  async findOne(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<MWRDto<ResponseUserDto>> {
+    const result = plainToInstance(
+      ResponseUserDto,
+      await this.userService.findOne({
+        id: +id,
+        onlyActive: null,
+        orgId: user.orgSelectedId,
+      }),
+    );
     return { ...MESSAGE_OK, result };
   }
 
@@ -84,9 +97,12 @@ export class UserController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseUserDto>> {
-    const user = await this.userService.update(+id, updateUserDto);
-    const result = plainToInstance(ResponseUserDto, user);
+    const result = plainToInstance(
+      ResponseUserDto,
+      await this.userService.update(+id, updateUserDto, user),
+    );
     return { ...MESSAGE_OK, result };
   }
 
@@ -95,8 +111,11 @@ export class UserController {
     level: 'write',
   })
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.userService.remove(+id);
+  async remove(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.userService.remove(+id, user);
     return MESSAGE_OK;
   }
 
@@ -105,8 +124,11 @@ export class UserController {
     level: 'write',
   })
   @Get(':id/activate')
-  async activate(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.userService.activate(+id);
+  async activate(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.userService.activate(+id, user);
     return MESSAGE_OK;
   }
 
@@ -115,8 +137,20 @@ export class UserController {
     level: 'write',
   })
   @Get(':id/unban')
-  async unban(@Param('id') id: string): Promise<DefaultMessageDto> {
-    await this.userService.unban(+id);
+  async unban(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.userService.unban(+id, user);
+    return MESSAGE_OK;
+  }
+
+  @Get('organization/:id')
+  async changeOrg(
+    @Param('id') id: string,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    this.userService.changeOrg(+id, user);
     return MESSAGE_OK;
   }
 }

@@ -14,6 +14,7 @@ import { SimpleObject } from '../helpers/interfaces/common';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { getNowTimestampSec } from '../helpers/constants';
 import { Organization } from '../organization/entities/organization.entity';
+import { ResponseUserDto } from './dto/response-user.dto';
 
 @Injectable()
 export class UserService {
@@ -25,6 +26,7 @@ export class UserService {
 
   async create(
     createUserDto: CreateUserDto,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<User> {
     const isExistUserByPhone = await this.findOne(
@@ -35,21 +37,41 @@ export class UserService {
       },
       manager,
     );
+    const isExistUserByLogin = await this.findOne(
+      {
+        login: createUserDto.toEntity().login,
+        onlyActive: null,
+        withoutError: true,
+      },
+      manager,
+    );
     if (isExistUserByPhone) {
       throw new BadRequestException(this.i18n.t('user.errors.duplicate_phone'));
     }
+    if (isExistUserByLogin) {
+      throw new BadRequestException(this.i18n.t('user.errors.duplicate_login'));
+    }
     const userEntityToSave = createUserDto.toEntity();
+    userEntityToSave.orgEntities = [
+      new Organization({ id: user.orgSelectedId }),
+    ];
     return manager
       ? manager.save(User, userEntityToSave)
       : this.userRepository.save(userEntityToSave);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAll(user: ResponseUserDto): Promise<User[]> {
+    return this.userRepository.find({
+      where: {
+        orgEntities: {
+          id: user.orgSelectedId,
+        },
+      },
+    });
   }
 
   async findOne(
-    { id, phone, onlyActive, withoutError, login }: FindOneUser,
+    { id, phone, onlyActive, withoutError, login, orgId }: FindOneUser,
     manager?: EntityManager,
   ): Promise<User> {
     let where: SimpleObject = {};
@@ -73,21 +95,33 @@ export class UserService {
     } else {
       throw new BadRequestException(this.i18n.t('user.errors.bad_req'));
     }
-    const user = await repoUser
+    const qb = repoUser
       .createQueryBuilder('user')
-      .leftJoin('organization_user_list', 'orgList', 'orgList.userId=user.id')
+      .leftJoin(
+        'organization_user_list',
+        'orgUserList',
+        'orgUserList.userId=user.id',
+      )
       .leftJoinAndMapMany(
         'user.orgEntities',
         Organization,
-        'orgSelected',
-        'orgSelected.id=orgList.organizationId',
+        'orgList',
+        'orgList.id=orgUserList.organizationId',
       )
-      .where(where)
-      .getOne();
+      .where(where);
+    if (orgId) {
+      qb.andWhere('orgUserList.organizationId = :orgId', { orgId });
+    }
+    const user = await qb.getOne();
     if (!user && withoutError !== true) {
       throw new NotFoundException(this.i18n.t('user.errors.not_found'));
     }
-    user.orgSelectedId = user.orgEntities[0].id;
+    if (user) {
+      user.orgSelectedId = -1;
+      if (user?.orgEntities?.length) {
+        user.orgSelectedId = user.orgEntities[0].id;
+      }
+    }
     return user;
   }
 
@@ -98,10 +132,14 @@ export class UserService {
   async update(
     id: number,
     updateUserDto: UpdateUserDto,
+    user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<User> {
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    await this.findOne({ id, onlyActive: null }, manager);
+    await this.findOne(
+      { id, onlyActive: null, orgId: user.orgSelectedId },
+      manager,
+    );
     const userEntityToUpd: User = updateUserDto.toEntity(id);
     if (userEntityToUpd.phone) {
       const isExistUserByPhone = await this.findOne(
@@ -122,21 +160,48 @@ export class UserService {
     return this.findOne({ id }, manager);
   }
 
-  async remove(id: number, manager?: EntityManager): Promise<void> {
-    await this.findOne({ id }, manager);
+  async remove(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.findOne({ id, orgId: user.orgSelectedId }, manager);
     const repo = manager ? manager.getRepository(User) : this.userRepository;
     await repo.update(id, repo.create({ active: false, rights: {} }));
   }
 
-  async activate(id: number, manager?: EntityManager): Promise<void> {
-    await this.findOne({ id, onlyActive: false }, manager);
+  async activate(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.findOne(
+      { id, onlyActive: false, orgId: user.orgSelectedId },
+      manager,
+    );
     const repo = manager ? manager.getRepository(User) : this.userRepository;
     await repo.update(id, repo.create({ active: true }));
   }
 
-  async unban(id: number, manager?: EntityManager): Promise<void> {
-    await this.findOne({ id, onlyActive: null }, manager);
+  async unban(
+    id: number,
+    user: ResponseUserDto,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.findOne(
+      { id, onlyActive: null, orgId: user.orgSelectedId },
+      manager,
+    );
     const repo = manager ? manager.getRepository(User) : this.userRepository;
     await repo.update(id, repo.create({ banned_to: 0 }));
+  }
+
+  changeOrg(id: number, user: ResponseUserDto) {
+    const org = user.orgEntities.find((org) => org.id === +id);
+    if (org) {
+      user.orgSelectedId = +id;
+    } else {
+      throw new BadRequestException(this.i18n.t('user.errors.org_change'));
+    }
   }
 }

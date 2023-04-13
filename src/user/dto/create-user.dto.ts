@@ -58,6 +58,14 @@ export class CreateUserDto {
   rights: RightsDto;
 
   @Expose()
+  @IsString()
+  @IsDefined()
+  @MinLength(2)
+  @MaxLength(100)
+  @IsOptional()
+  login?: string;
+
+  @Expose()
   public fio(): string {
     return `${this.surname} ${this.name}${
       this.secondname ? ' ' + this.secondname : ''
@@ -71,7 +79,9 @@ export class CreateUserDto {
     }
     it.fio = this.fio();
     it.phone = this.phone;
-    it.login = `${transliterate(this.surname)}.${transliterate(this.name)}`;
+    it.login = this.login
+      ? this.login
+      : `${transliterate(this.surname)}.${transliterate(this.name)}`;
     it.password_hash = hashPassword(this.password);
     return it;
   }

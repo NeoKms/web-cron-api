@@ -2,6 +2,8 @@
   "errors": {
     "duplicate_phone": "User with this phone number already exists",
     "bad_req": "Invalid request parameters",
-    "not_found": "User is not found"
+    "not_found": "User is not found",
+    "org_change": "organization not found",
+    "duplicate_login": "a user with a similar login is already in the system"
   }
 }

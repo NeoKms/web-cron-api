@@ -5,7 +5,10 @@ import {
   IsNotEmptyObject,
   IsNumber,
   IsObject,
+  IsPositive,
   IsString,
+  MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { CronTimerDto } from './cron-timer.dto';
@@ -15,11 +18,13 @@ import { Job } from '../entities/job.entity';
 export default class CreateJobDto {
   @Expose()
   @IsNumber()
-  @IsNotEmpty()
+  @IsPositive()
   public sshEntityId: number;
   @Expose()
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(500)
   public job: string;
   @Expose()
   @Type(() => CronTimerDto)

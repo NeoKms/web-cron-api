@@ -1,7 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { defaultRights } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
-import { Ssh } from '../../ssh/entities/ssh.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity()
 export class User {
@@ -11,7 +17,7 @@ export class User {
   @Column('text')
   public fio: string;
 
-  @Column()
+  @Column({ unique: true })
   public login: string;
 
   @Column()
@@ -35,8 +41,13 @@ export class User {
   @Column({ type: 'int', default: 0 })
   public banned_to: number;
 
-  @OneToMany(() => Ssh, (ssh) => ssh.userEntity)
-  sshEntities: Ssh;
+  @OneToOne(() => Organization, (org) => org.ownerUserEntity)
+  orgOwnerEntity: Organization;
+
+  @ManyToMany(() => Organization, (org) => org.userEntities, { eager: true })
+  orgEntities: Organization[];
+
+  orgSelectedId: number;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager, Repository } from 'typeorm';
+import { Between, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Log } from './eitities/log.entity';
 import { UpsertLogDto } from './dto/upsert-log.dto';
@@ -11,12 +11,15 @@ import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { LogFind } from '../helpers/interfaces/log';
 import { Logger } from '../helpers/logger';
 import { fillOptionsByParams } from '../helpers/constants';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
 @Injectable()
 export class LogService {
   private readonly logger = new Logger(LogService.name);
   constructor(
     @InjectRepository(Log)
     private readonly logRepository: Repository<Log>,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async upsert(dto: UpsertLogDto, manager?: EntityManager): Promise<boolean> {
@@ -58,8 +61,8 @@ export class LogService {
           id: logFindObj.jobId,
           sshEntity: {
             id: logFindObj.sshId,
-            userEntity: {
-              id: user.id,
+            orgEntity: {
+              id: user.orgSelectedId,
             },
           },
         },
@@ -89,7 +92,7 @@ export class LogService {
       ({ data }) => data,
     );
     if (!log) {
-      throw new NotFoundException();
+      throw new NotFoundException(this.i18n.t('log.errors.not_found'));
     }
     return log;
   }
@@ -120,21 +123,33 @@ export class LogService {
       isDel: 0,
       jobEntity: {
         sshEntity: {
-          userEntity: {
-            id: user.id,
+          orgEntity: {
+            id: user.orgSelectedId,
           },
         },
       },
     } as FindOptionsWhere<Log>;
     fillOptionsByParams(params, options);
     if (Object.keys(params?.filter ?? {})?.length) {
-      if (params.filter.hasOwnProperty('sshId')) {
+      if (params.filter.sshId) {
         options.where.jobEntity['sshEntity'].id = params.filter.sshId;
       }
-      if (params.filter.hasOwnProperty('jobId')) {
+      if (params.filter.jobId) {
         options.where.jobEntity['id'] = params.filter.jobId;
       }
-      if (params.filter.hasOwnProperty('timestamp_start')) {
+      if (params.filter.status) {
+        options.where.status = params.filter.status;
+      }
+      if (params.filter.dts && params.filter.dtf) {
+        options.where.timestamp_start = Between(
+          params.filter.dts,
+          params.filter.dtf,
+        );
+      } else if (params.filter.dts) {
+        options.where.timestamp_start = params.filter.dts;
+      } else if (params.filter.dtf) {
+        options.where.timestamp_start = params.filter.dtf;
+      } else if (params.filter.timestamp_start) {
         options.where.timestamp_start = params.filter.timestamp_start;
       }
     }

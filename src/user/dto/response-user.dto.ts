@@ -1,11 +1,10 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsObject, IsString } from 'class-validator';
-import { User } from '../entities/user.entity';
 import RightsDto from '../../auth/dto/rights.dto';
-import { PartialType } from '@nestjs/mapped-types';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Exclude()
-export class ResponseUserDto extends PartialType(User) {
+export class ResponseUserDto {
   @Expose()
   @IsNumber()
   public login_cnt: number;
@@ -38,4 +37,13 @@ export class ResponseUserDto extends PartialType(User) {
   @Expose()
   @IsBoolean()
   public active: boolean;
+
+  @Expose()
+  @IsObject({ each: true })
+  @Type(() => Organization)
+  public orgEntities: Organization[];
+
+  @Expose()
+  @IsNumber()
+  public orgSelectedId: number;
 }

@@ -1,8 +1,9 @@
 import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { RightsGuard } from './rights.guard';
 import { rightsType } from '../../helpers/constants';
+import RightsDto from '../dto/rights.dto';
 export type RightObject = {
-  entity: string;
+  entity: keyof RightsDto;
   level: keyof rightsType;
 };
 export const Rights = (...rights: RightObject[]) => {

@@ -12,9 +12,6 @@ export default class ResponseJobDto {
   @IsString()
   public job: string;
   @Expose()
-  @IsNumber()
-  public port: number;
-  @Expose()
   @Type(() => CronTimerDto)
   public time: CronTimerDto;
   @Expose()
@@ -23,4 +20,7 @@ export default class ResponseJobDto {
   @Expose()
   @Type(() => ResponseSshDto)
   public sshEntity: ResponseSshDto;
+  @Expose()
+  @IsNumber()
+  isActive: number;
 }

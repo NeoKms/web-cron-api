@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
-import { hashPassword } from '../helpers/constants';
+import { getNowTimestampSec, hashPassword } from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
@@ -54,7 +54,7 @@ export class AuthService {
     const user = await this.userService.findOne({ login: username });
     user.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
-      user.login_timestamp = Math.round(Date.now() / 1000);
+      user.login_timestamp = getNowTimestampSec();
       user.login_cnt = 0;
       user.banned_to = 0;
       result = plainToClass(ResponseUserDto, user);
@@ -63,7 +63,7 @@ export class AuthService {
     if (user.login_cnt >= 5) {
       const isFirst = user.banned_to === 0;
       const timer = isFirst ? 3600 * 3 : 86400;
-      user.banned_to = Math.round(Date.now() / 1000) + timer;
+      user.banned_to = getNowTimestampSec() + timer;
       result = isFirst ? -1 : -2;
     }
     await this.userService.updateInternal(user.id, user);
@@ -78,6 +78,10 @@ export class AuthService {
 
   async checkLogin(user: ResponseUserDto): Promise<ResponseUserDto> {
     const userInDb = await this.userService.findOne({ id: user.id });
+    if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
+      user.orgSelectedId = userInDb.orgSelectedId;
+    }
+    user.orgEntities = userInDb.orgEntities;
     user.rights = userInDb.rights;
     return user;
   }

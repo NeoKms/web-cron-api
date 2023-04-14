@@ -1,15 +1,48 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { SimpleObject } from '../../helpers/interfaces/common';
 import {
   IsDefined,
+  IsEnum,
   IsNotEmptyObject,
+  IsNumber,
   IsObject,
   IsOptional,
+  IsPositive,
   IsString,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import PaginationDto from '../../helpers/pagination.dto';
+import { LogStatusesType } from '../../helpers/interfaces/log';
 
+class FilterProps {
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  sshId?: number;
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  jobId?: number;
+  @IsOptional()
+  @IsEnum([1, 2, 3])
+  status?: LogStatusesType;
+  @IsNumber()
+  @Min(1000000000)
+  @Max(9999999999)
+  @IsOptional()
+  timestamp_start?: number;
+  @IsNumber()
+  @Min(1000000000)
+  @Max(9999999999)
+  @IsOptional()
+  dts?: number;
+  @IsNumber()
+  @Min(1000000000)
+  @Max(9999999999)
+  @IsOptional()
+  dtf?: number;
+}
 @Exclude()
 export default class FilterLogDto {
   @Expose()
@@ -19,7 +52,9 @@ export default class FilterLogDto {
   @Expose()
   @IsObject()
   @IsOptional()
-  public filter?: SimpleObject;
+  @ValidateNested()
+  @Type(() => FilterProps)
+  public filter?: FilterProps;
   @Expose()
   @IsObject()
   @ValidateNested()

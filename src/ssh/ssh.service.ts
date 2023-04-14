@@ -185,7 +185,7 @@ export class SshService {
     } as FindOptionsWhere<Ssh>);
     if (user !== null) {
       options.where = Object.assign(options.where, {
-        userEntityId: user.id,
+        orgEntity: { id: user.orgSelectedId },
       } as FindOptionsWhere<Ssh>);
     }
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;
@@ -277,7 +277,6 @@ export class SshService {
         manager,
       );
       if (isExist) {
-        //toDo exist in other user
         throw new BadRequestException(this.i18n.t('ssh.errors.duplicate'));
       }
       const { id } = await repo.save(createSshDto.toEntity(user));

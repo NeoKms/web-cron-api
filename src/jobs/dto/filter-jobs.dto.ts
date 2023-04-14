@@ -1,8 +1,22 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { SimpleObject } from '../../helpers/interfaces/common';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsPositive,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import PaginationDto from '../../helpers/pagination.dto';
 
+@Exclude()
+class FilterProps {
+  @Expose()
+  @IsNumber()
+  @IsPositive()
+  sshId: number;
+}
 @Exclude()
 export default class FilterJobsDto {
   @Expose()
@@ -10,9 +24,12 @@ export default class FilterJobsDto {
   @IsString({ each: true })
   public select?: Array<string>;
   @Expose()
-  @IsObject()
+  @Type(() => FilterProps)
   @IsOptional()
-  public filter?: SimpleObject;
+  @IsDefined()
+  @ValidateNested()
+  @IsObject()
+  public filter?: FilterProps;
   @Expose()
   @IsOptional()
   @Type(() => PaginationDto)

@@ -8,7 +8,9 @@ import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { Logger } from '../helpers/logger';
-
+import { google } from 'googleapis';
+import MailComposer from 'nodemailer/lib/mail-composer';
+import { Timeout } from '@nestjs/schedule';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -22,6 +24,44 @@ export class AuthService {
     this.redisClient = redisService.getClient();
   }
 
+  private encodeMessage(message) {
+    return Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+  @Timeout(2000)
+  private async createMail(options) {
+    const mailComposer = new MailComposer(options);
+    const message = await mailComposer.compile().build();
+    return this.encodeMessage(message);
+  }
+  public async testSendEmail() {
+    const apiKey = this.configService.get('GOOGLE_GMAIL_API_KEY');
+    if (!apiKey) {
+      this.logger.verbose('no api key');
+      return false;
+    }
+    const gmailApi = google.gmail({ version: 'v1', auth: apiKey });
+    const options = {
+      to: 'upachko@gmail.com',
+      // cc: '',
+      // replyTo: 'amit@labnol.org',
+      subject: 'Hello',
+      text: 'This email is sent',
+      html: `<p>This is a <b>test email</b> from <a href="#">kkkkkkkkkkkkkk</a>.</p>`,
+      textEncoding: 'base64',
+    };
+    const rawMessage = await this.createMail(options);
+    const result = await gmailApi.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: rawMessage,
+      },
+    });
+    console.log(result);
+  }
   async deleteAllRedisSessionByUserId(id: number): Promise<void> {
     await this.redisClient
       .keys('sess:*')

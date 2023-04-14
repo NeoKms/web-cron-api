@@ -42,6 +42,7 @@ export default () => ({
     logger: 'file',
   } as TypeOrmModuleOptions,
   UPLOAD,
+  GOOGLE_GMAIL_API_KEY: env.GOOGLE_GMAIL_API_KEY,
   U_DIRS: {
     keys: checkStaticDir(UPLOAD + 'keys/'),
   },

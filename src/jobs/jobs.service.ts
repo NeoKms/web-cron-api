@@ -131,7 +131,7 @@ export class JobsService {
     options.where = Object.assign(options.where, {
       isDel: 0,
       sshEntity: {
-        userEntityId: user.id,
+        orgEntityId: user.orgSelectedId,
       },
     } as FindOptionsWhere<Job>);
     const repo = manager ? manager.getRepository(Job) : this.jobRepository;

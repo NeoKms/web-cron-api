@@ -18,6 +18,11 @@ export type I18nTranslations = {
             "bad_req": string;
         };
     };
+    "log": {
+        "errors": {
+            "not_found": string;
+        };
+    };
     "main": {
         "messages": {
             "server_port": string;

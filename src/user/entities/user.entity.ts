@@ -2,13 +2,11 @@ import {
   Column,
   Entity,
   ManyToMany,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { defaultRights } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
-import { Ssh } from '../../ssh/entities/ssh.entity';
 import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity()
@@ -42,9 +40,6 @@ export class User {
 
   @Column({ type: 'int', default: 0 })
   public banned_to: number;
-
-  @OneToMany(() => Ssh, (ssh) => ssh.userEntity)
-  sshEntities: Ssh;
 
   @OneToOne(() => Organization, (org) => org.ownerUserEntity)
   orgOwnerEntity: Organization;

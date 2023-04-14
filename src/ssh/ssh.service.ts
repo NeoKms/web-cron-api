@@ -185,7 +185,7 @@ export class SshService {
     } as FindOptionsWhere<Ssh>);
     if (user !== null) {
       options.where = Object.assign(options.where, {
-        userEntityId: user.id,
+        orgEntity: { id: user.orgSelectedId },
       } as FindOptionsWhere<Ssh>);
     }
     const repo = manager ? manager.getRepository(Ssh) : this.sshRepository;

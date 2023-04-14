@@ -7,8 +7,8 @@ import {
   IsObject,
   IsPositive,
   IsString,
-  Max,
-  Min,
+  MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { CronTimerDto } from './cron-timer.dto';
@@ -23,8 +23,8 @@ export default class CreateJobDto {
   @Expose()
   @IsString()
   @IsNotEmpty()
-  @Min(2)
-  @Max(500)
+  @MinLength(2)
+  @MaxLength(500)
   public job: string;
   @Expose()
   @Type(() => CronTimerDto)

@@ -7,8 +7,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
 import { Job } from '../../jobs/entities/job.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity()
 @Index(['host', 'username'], { unique: true })
@@ -29,11 +29,14 @@ export class Ssh {
   public updated_at: number;
   @Column({ type: 'int', nullable: true })
   public deleted_at: number;
-  @ManyToOne(() => User, (user) => user.sshEntities)
-  @JoinColumn({ name: 'userEntityId' })
-  public userEntity: User;
+  @ManyToOne(() => Organization, {
+    onDelete: 'RESTRICT',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn({ name: 'orgEntityId' })
+  public orgEntity: Organization;
   @Column()
-  public userEntityId: number;
+  public orgEntityId: number;
   @OneToMany(() => Job, (job) => job.sshEntity)
   public jobEntities: Job[];
 }

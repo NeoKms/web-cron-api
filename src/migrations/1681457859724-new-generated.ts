@@ -1,9 +1,4 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import {
-  defaultRights,
-  getNowTimestampSec,
-  hashPassword,
-} from '../helpers/constants';
 
 export class newGenerated1681457859724 implements MigrationInterface {
   name = 'newGenerated1681457859724';

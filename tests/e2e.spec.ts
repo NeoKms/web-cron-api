@@ -271,7 +271,6 @@ describe('App (e2e)', () => {
           .expect(404);
       });
     });
-
     describe('[user] ban/unban', () => {
       it(`[failed][POST] auth/login`, () => {
         return request(app.getHttpServer())
@@ -323,7 +322,6 @@ describe('App (e2e)', () => {
           .expect(200);
       });
     });
-
     describe('[user] Delete', () => {
       it(`[DELETE] user/:id`, () => {
         return request(app.getHttpServer())
@@ -553,11 +551,9 @@ describe('App (e2e)', () => {
               mocLogEntity.timestamp_start,
           )
           .set(authCookieHeader)
-          .send(mocOptions)
           .expect(200)
           .then(({ body }) => checkBody(body, false));
       });
-
       it(`[failed][GET] log/:sshId/:jobId/:timestamp_start`, () => {
         return request(app.getHttpServer())
           .get(

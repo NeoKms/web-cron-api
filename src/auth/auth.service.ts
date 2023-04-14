@@ -78,6 +78,10 @@ export class AuthService {
 
   async checkLogin(user: ResponseUserDto): Promise<ResponseUserDto> {
     const userInDb = await this.userService.findOne({ id: user.id });
+    if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
+      user.orgSelectedId = userInDb.orgSelectedId;
+    }
+    user.orgEntities = userInDb.orgEntities;
     user.rights = userInDb.rights;
     return user;
   }

@@ -11,12 +11,15 @@ import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { LogFind } from '../helpers/interfaces/log';
 import { Logger } from '../helpers/logger';
 import { fillOptionsByParams } from '../helpers/constants';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
 @Injectable()
 export class LogService {
   private readonly logger = new Logger(LogService.name);
   constructor(
     @InjectRepository(Log)
     private readonly logRepository: Repository<Log>,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async upsert(dto: UpsertLogDto, manager?: EntityManager): Promise<boolean> {
@@ -58,8 +61,8 @@ export class LogService {
           id: logFindObj.jobId,
           sshEntity: {
             id: logFindObj.sshId,
-            userEntity: {
-              id: user.id,
+            orgEntity: {
+              id: user.orgSelectedId,
             },
           },
         },
@@ -89,7 +92,7 @@ export class LogService {
       ({ data }) => data,
     );
     if (!log) {
-      throw new NotFoundException();
+      throw new NotFoundException(this.i18n.t('log.errors.not_found'));
     }
     return log;
   }
@@ -120,8 +123,8 @@ export class LogService {
       isDel: 0,
       jobEntity: {
         sshEntity: {
-          userEntity: {
-            id: user.id,
+          orgEntity: {
+            id: user.orgSelectedId,
           },
         },
       },

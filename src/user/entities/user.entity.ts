@@ -17,13 +17,13 @@ export class User {
   @Column('text')
   public fio: string;
 
-  @Column({ unique: true })
-  public login: string;
-
   @Column()
   public password_hash: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'text', unique: true })
+  public email: string;
+
+  @Column({ type: 'varchar', unique: true, nullable: true })
   public phone: string;
 
   @Column({ type: 'json', default: JSON.stringify(defaultRights) })

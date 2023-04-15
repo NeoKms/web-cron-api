@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, LessThan, Repository } from 'typeorm';
+import { DataSource, EntityManager, LessThan, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { FindOneUser } from '../helpers/interfaces/user';
 import { I18nService } from 'nestjs-i18n';
@@ -22,42 +22,65 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
     createUserDto: CreateUserDto,
     user: ResponseUserDto,
-    manager?: EntityManager,
+    manager2?: EntityManager,
   ): Promise<User> {
-    const isExistUserByPhone = await this.findOne(
-      {
-        phone: createUserDto.phone,
-        onlyActive: null,
-        withoutError: true,
-      },
-      manager,
-    );
-    const isExistUserByLogin = await this.findOne(
-      {
-        login: createUserDto.toEntity().login,
-        onlyActive: null,
-        withoutError: true,
-      },
-      manager,
-    );
-    if (isExistUserByPhone) {
-      throw new BadRequestException(this.i18n.t('user.errors.duplicate_phone'));
-    }
-    if (isExistUserByLogin) {
-      throw new BadRequestException(this.i18n.t('user.errors.duplicate_login'));
-    }
-    const userEntityToSave = createUserDto.toEntity();
-    userEntityToSave.orgEntities = [
-      new Organization({ id: user.orgSelectedId }),
-    ];
-    return manager
-      ? manager.save(User, userEntityToSave)
-      : this.userRepository.save(userEntityToSave);
+    const newUserEntity = null;
+    await this.dataSource.transaction(async (manager) => {
+      manager = manager2 ? manager2 : manager;
+      if (createUserDto.phone) {
+        const isExistUserByPhone = await this.findOne(
+          {
+            phone: createUserDto.phone,
+            onlyActive: null,
+            withoutError: true,
+          },
+          manager,
+        );
+        if (isExistUserByPhone) {
+          throw new BadRequestException(
+            this.i18n.t('user.errors.duplicate_phone'),
+          );
+        }
+      }
+      if (createUserDto.email) {
+        const isExistUserByEmail = await this.findOne(
+          {
+            email: createUserDto.email,
+            onlyActive: null,
+            withoutError: true,
+          },
+          manager,
+        );
+        if (isExistUserByEmail) {
+          throw new BadRequestException(
+            this.i18n.t('user.errors.duplicate_email'),
+          );
+        }
+      }
+      const userEntityToSave = createUserDto.toEntity();
+      if (user) {
+        userEntityToSave.orgEntities = [
+          new Organization({ id: user.orgSelectedId }),
+        ];
+      }
+      const newUserEntity = await manager.save(User, userEntityToSave);
+      if (!user) {
+        const newOrg = new Organization({
+          name: `org_${Date.now()}`,
+          created_at: getNowTimestampSec(),
+          userEntities: [newUserEntity],
+          ownerUserEntity: newUserEntity,
+        });
+        await manager.save(Organization, newOrg);
+      }
+    });
+    return newUserEntity;
   }
 
   async findAll(user: ResponseUserDto): Promise<User[]> {
@@ -71,7 +94,7 @@ export class UserService {
   }
 
   async findOne(
-    { id, phone, onlyActive, withoutError, login, orgId }: FindOneUser,
+    { id, phone, onlyActive, withoutError, email, orgId }: FindOneUser,
     manager?: EntityManager,
   ): Promise<User> {
     let where: SimpleObject = {};
@@ -88,8 +111,8 @@ export class UserService {
     }
     if (id) {
       where.id = id;
-    } else if (login) {
-      where.login = login;
+    } else if (email) {
+      where.email = email;
     } else if (phone) {
       where.phone = phone;
     } else {

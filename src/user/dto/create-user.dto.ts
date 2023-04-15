@@ -1,16 +1,18 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsDefined,
+  IsEmail,
   IsNotEmpty,
   IsObject,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { User } from '../entities/user.entity';
-import { hashPassword, transliterate } from '../../helpers/constants';
+import { hashPassword } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
 
 @Exclude()
@@ -39,8 +41,10 @@ export class CreateUserDto {
 
   @Expose()
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  phone: string;
+  @IsPhoneNumber()
+  phone?: string;
 
   @Expose()
   @IsString()
@@ -59,11 +63,10 @@ export class CreateUserDto {
 
   @Expose()
   @IsString()
-  @IsDefined()
-  @MinLength(2)
+  @IsNotEmpty()
+  @IsEmail()
   @MaxLength(100)
-  @IsOptional()
-  login?: string;
+  email: string;
 
   @Expose()
   public fio(): string {
@@ -78,10 +81,10 @@ export class CreateUserDto {
       it.rights = this.rights;
     }
     it.fio = this.fio();
-    it.phone = this.phone;
-    it.login = this.login
-      ? this.login
-      : `${transliterate(this.surname)}.${transliterate(this.name)}`;
+    if (this.phone) {
+      it.phone = this.phone;
+    }
+    it.email = this.email;
     it.password_hash = hashPassword(this.password);
     return it;
   }

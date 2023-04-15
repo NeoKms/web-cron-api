@@ -19,6 +19,7 @@ import { Logger } from '../helpers/logger';
 import { MailerService } from '../mailer/mailer.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Injectable()
 export class AuthService {
@@ -76,7 +77,6 @@ export class AuthService {
       this.i18n.t('mailer.email_templates.send_code.subject'),
       this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
     );
-    console.log(sent, 'sent');
     if (!sent) {
       throw new InternalServerErrorException(
         this.i18n.t('mailer.errors.cant_send'),
@@ -93,7 +93,7 @@ export class AuthService {
     let result = null;
     this.logger.log('login: ' + username);
     req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
-    const user = await this.userService.findOne({ login: username });
+    const user = await this.userService.findOne({ email: username });
     user.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
       user.login_timestamp = getNowTimestampSec();
@@ -126,5 +126,24 @@ export class AuthService {
     user.orgEntities = userInDb.orgEntities;
     user.rights = userInDb.rights;
     return user;
+  }
+
+  async signUp(dto: SignUpDto) {
+    const code = await this.redisClient.get(dto.verifyKey);
+    if (!code || +code !== dto.code) {
+      throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
+    }
+    await this.userService.create(dto, null);
+    await this.mailerService.sendEmail(
+      dto.email,
+      this.i18n.t('mailer.email_templates.sign_up.subject'),
+      this.i18n.t('mailer.email_templates.sign_up.text', {
+        args: {
+          fio: dto.fio(),
+          login: dto.email,
+          password: dto.password,
+        },
+      }),
+    );
   }
 }

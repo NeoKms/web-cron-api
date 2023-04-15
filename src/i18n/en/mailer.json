@@ -10,6 +10,10 @@
     "send_code": {
       "text": "Greetings. Your web cron account verification code is <b>{code}</b>.",
       "subject": "Web cron account verification code."
+    },
+    "sign_up": {
+      "text": "Welcome to web cron, {fio}. your authorization data: login - {login}, password - {password}.",
+      "subject": "Welcome to web cron."
     }
   }
 }

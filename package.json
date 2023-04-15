@@ -45,6 +45,7 @@
     "nestjs-i18n": "^10.2.6",
     "nestjs-redis": "git+https://github.com/NeoKms/nestjs-redis.git",
     "node-ssh": "^13.0.1",
+    "nodemailer": "^6.9.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",

@@ -4,6 +4,12 @@ export class newGenerated1681457859724 implements MigrationInterface {
   name = 'newGenerated1681457859724';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('drop table if exists log;');
+    await queryRunner.query('drop table if exists job;');
+    await queryRunner.query('drop table if exists organization_user_list;');
+    await queryRunner.query('drop table if exists organization;');
+    await queryRunner.query('drop table if exists ssh;');
+    await queryRunner.query('drop table if exists user;');
     await queryRunner.query(
       `CREATE TABLE \`log\` (\`timestamp_start\` int NOT NULL, \`jobEntityId\` int NOT NULL, \`isDel\` tinyint NOT NULL DEFAULT '0', \`timestamp_end\` int NULL, \`content\` longtext NOT NULL DEFAULT '{"text":"","error":""}', \`status\` tinyint NOT NULL COMMENT '1=in progress, 2=finish success, 3=finish with error' DEFAULT '1', PRIMARY KEY (\`timestamp_start\`, \`jobEntityId\`)) ENGINE=InnoDB`,
     );

@@ -21,6 +21,7 @@ import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { MESSAGE_OK } from '../helpers/constants';
 import { UserProfile } from '../helpers/decorators/user.decorator';
+import SendCodeDto from './dto/send-code.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,6 +35,14 @@ import { UserProfile } from '../helpers/decorators/user.decorator';
 )
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @ApiResponse({ type: String })
+  @HttpCode(200)
+  @Post('/sendCode')
+  async sendCode(@Body() dto: SendCodeDto): Promise<MWRDto<string>> {
+    const result = await this.authService.sendCode(dto.email);
+    return { ...MESSAGE_OK, result };
+  }
 
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)

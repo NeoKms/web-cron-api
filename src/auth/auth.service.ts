@@ -1,16 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
-import { getNowTimestampSec, hashPassword } from '../helpers/constants';
+import {
+  getNowTimestampSec,
+  hashCode,
+  hashPassword,
+} from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { Logger } from '../helpers/logger';
-import { google } from 'googleapis';
-import MailComposer from 'nodemailer/lib/mail-composer';
-import { Timeout } from '@nestjs/schedule';
+import { MailerService } from '../mailer/mailer.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -20,47 +29,10 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly mailerService: MailerService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     this.redisClient = redisService.getClient();
-  }
-
-  private encodeMessage(message) {
-    return Buffer.from(message)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  }
-  @Timeout(2000)
-  private async createMail(options) {
-    const mailComposer = new MailComposer(options);
-    const message = await mailComposer.compile().build();
-    return this.encodeMessage(message);
-  }
-  public async testSendEmail() {
-    const apiKey = this.configService.get('GOOGLE_GMAIL_API_KEY');
-    if (!apiKey) {
-      this.logger.verbose('no api key');
-      return false;
-    }
-    const gmailApi = google.gmail({ version: 'v1', auth: apiKey });
-    const options = {
-      to: 'upachko@gmail.com',
-      // cc: '',
-      // replyTo: 'amit@labnol.org',
-      subject: 'Hello',
-      text: 'This email is sent',
-      html: `<p>This is a <b>test email</b> from <a href="#">kkkkkkkkkkkkkk</a>.</p>`,
-      textEncoding: 'base64',
-    };
-    const rawMessage = await this.createMail(options);
-    const result = await gmailApi.users.messages.send({
-      userId: 'me',
-      requestBody: {
-        raw: rawMessage,
-      },
-    });
-    console.log(result);
   }
   async deleteAllRedisSessionByUserId(id: number): Promise<void> {
     await this.redisClient
@@ -83,6 +55,36 @@ export class AuthService {
       .catch((err) => this.logger.error(err));
   }
 
+  async sendCode(email: string): Promise<string> {
+    const verifyKey = hashCode(email + Date.now().toString()).toString();
+    const code = Math.floor(Math.random() * 100000000 + 1).toString();
+    const cantRetryKey = email + '_retry';
+    const nowTs = getNowTimestampSec();
+    const cantRetry = await this.redisClient.get(cantRetryKey);
+    if (cantRetry) {
+      throw new BadRequestException(
+        this.i18n.t('auth.errors.send_code_retry', {
+          args: { sec: parseInt(cantRetry) - nowTs },
+        }),
+      );
+    } else {
+      await this.redisClient.set(cantRetryKey, nowTs + 60, 'EX', 60);
+    }
+    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
+    const sent = await this.mailerService.sendEmail(
+      email,
+      this.i18n.t('mailer.email_templates.send_code.subject'),
+      this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
+    );
+    console.log(sent, 'sent');
+    if (!sent) {
+      throw new InternalServerErrorException(
+        this.i18n.t('mailer.errors.cant_send'),
+      );
+    }
+    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
+    return verifyKey;
+  }
   async login(
     username: string,
     password: string,

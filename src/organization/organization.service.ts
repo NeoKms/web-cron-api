@@ -11,7 +11,6 @@ export class OrganizationService {
   constructor(
     @InjectRepository(Organization)
     private readonly orgRepository: Repository<Organization>,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   getById(id: number): Promise<Organization> {

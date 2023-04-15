@@ -10,6 +10,7 @@ export type I18nTranslations = {
         "errors": {
             "wrong_login_or_password": string;
             "ban_login": string;
+            "send_code_retry": string;
         };
     };
     "job": {
@@ -21,6 +22,21 @@ export type I18nTranslations = {
     "log": {
         "errors": {
             "not_found": string;
+        };
+    };
+    "mailer": {
+        "messages": {
+            "ready": string;
+        };
+        "errors": {
+            "not_ready": string;
+            "cant_send": string;
+        };
+        "email_templates": {
+            "send_code": {
+                "text": string;
+                "subject": string;
+            };
         };
     };
     "main": {

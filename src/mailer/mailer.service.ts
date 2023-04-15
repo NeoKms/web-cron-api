@@ -27,10 +27,10 @@ export class MailerService {
       this.logger.verbose(this.i18n.t('mailer.errors.not_ready'));
     }
   }
+
   async sendEmail(to, subject, text): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
-    console.log('AAAAAA');
     return new Promise<boolean>((resolve) => {
       if (this.transporter === null) {
         resolve(false);

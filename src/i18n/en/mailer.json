@@ -1,0 +1,15 @@
+{
+  "messages": {
+    "ready": "Email sending system initialized"
+  },
+  "errors": {
+    "not_ready": "The email forwarding system is not enabled. add environment variables GMAIL_EMAIL and GMAIL_KEY",
+    "cant_send": "Failed to send verification code"
+  },
+  "email_templates": {
+    "send_code": {
+      "text": "Greetings. Your web cron account verification code is <b>{code}</b>.",
+      "subject": "Web cron account verification code."
+    }
+  }
+}

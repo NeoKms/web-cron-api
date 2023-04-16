@@ -27,30 +27,53 @@ export class MailerService {
       this.logger.verbose(this.i18n.t('mailer.errors.not_ready'));
     }
   }
+  async waitVerify(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (this.transporter === null) {
+        resolve(false);
+      }
+      this.transporter.verify((error): void => {
+        if (error) {
+          this.logger.error(
+            error.message,
+            this.i18n.t('mailer.errors.cant_verify'),
+          );
+          reject(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
 
   async sendEmail(to, subject, text): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
-    return new Promise<boolean>((resolve) => {
-      if (this.transporter === null) {
-        resolve(false);
-      } else {
-        this.transporter.sendMail(
-          {
-            to,
-            subject,
-            html: text,
-          },
-          function (err) {
-            if (err) {
-              self.logger.error(err.message);
+    return this.waitVerify()
+      .then(
+        () =>
+          new Promise<boolean>((resolve) => {
+            if (this.transporter === null) {
               resolve(false);
             } else {
-              resolve(true);
+              this.transporter.sendMail(
+                {
+                  to,
+                  subject,
+                  html: text,
+                },
+                function (err) {
+                  if (err) {
+                    self.logger.error(err.message);
+                    resolve(false);
+                  } else {
+                    resolve(true);
+                  }
+                },
+              );
             }
-          },
-        );
-      }
-    });
+          }),
+      )
+      .catch(() => false);
   }
 }

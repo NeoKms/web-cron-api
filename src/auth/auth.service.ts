@@ -71,6 +71,13 @@ export class AuthService {
     } else {
       await this.redisClient.set(cantRetryKey, nowTs + 60, 'EX', 60);
     }
+    const isExistEmail = await this.userService.findOne({
+      email,
+      withoutError: true,
+    });
+    if (isExistEmail) {
+      throw new BadRequestException(this.i18n.t('mailer.errors.cant_send'));
+    }
     await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
     const sent = await this.mailerService.sendEmail(
       email,

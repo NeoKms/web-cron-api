@@ -32,6 +32,7 @@ export type I18nTranslations = {
         "errors": {
             "not_ready": string;
             "cant_send": string;
+            "cant_verify": string;
         };
         "email_templates": {
             "send_code": {

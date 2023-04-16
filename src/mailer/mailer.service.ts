@@ -47,6 +47,8 @@ export class MailerService {
   }
 
   async sendEmail(to, subject, text): Promise<boolean> {
+    if (this.configService.get('IS_TEST'))
+      return new Promise((resolve) => resolve(false));
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     return this.waitVerify()

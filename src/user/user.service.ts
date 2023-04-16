@@ -30,7 +30,7 @@ export class UserService {
     user: ResponseUserDto,
     manager2?: EntityManager,
   ): Promise<User> {
-    const newUserEntity = null;
+    let newUserEntity = null;
     await this.dataSource.transaction(async (manager) => {
       manager = manager2 ? manager2 : manager;
       if (createUserDto.phone) {
@@ -69,7 +69,7 @@ export class UserService {
           new Organization({ id: user.orgSelectedId }),
         ];
       }
-      const newUserEntity = await manager.save(User, userEntityToSave);
+      newUserEntity = await manager.save(User, userEntityToSave);
       if (!user) {
         const newOrg = new Organization({
           name: `org_${Date.now()}`,

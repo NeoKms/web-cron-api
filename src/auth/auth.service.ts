@@ -56,13 +56,17 @@ export class AuthService {
       .catch((err) => this.logger.error(err));
   }
 
+  private generateCode() {
+    if (this.configService.get('IS_TEST')) return '1';
+    else return Math.floor(Math.random() * 100000000 + 1).toString();
+  }
   async sendCode(email: string): Promise<string> {
     const verifyKey = hashCode(email + Date.now().toString()).toString();
-    const code = Math.floor(Math.random() * 100000000 + 1).toString();
+    const code = this.generateCode();
     const cantRetryKey = email + '_retry';
     const nowTs = getNowTimestampSec();
     const cantRetry = await this.redisClient.get(cantRetryKey);
-    if (cantRetry) {
+    if (cantRetry && !this.configService.get('IS_TEST')) {
       throw new BadRequestException(
         this.i18n.t('auth.errors.send_code_retry', {
           args: { sec: parseInt(cantRetry) - nowTs },
@@ -84,7 +88,7 @@ export class AuthService {
       this.i18n.t('mailer.email_templates.send_code.subject'),
       this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
     );
-    if (!sent) {
+    if (!sent && !this.configService.get('IS_TEST')) {
       throw new InternalServerErrorException(
         this.i18n.t('mailer.errors.cant_send'),
       );

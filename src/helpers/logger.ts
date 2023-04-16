@@ -6,6 +6,12 @@ export class Logger extends ConsoleLogger {
     if (process.env.NODE_ENV === 'test') return;
     context ? super.log(message, context) : super.log(message);
   }
+
+  verbose(message: any, context?: string) {
+    if (process.env.NODE_ENV === 'test') return;
+    super.verbose(message, context);
+  }
+
   debug(message: any, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
     context ? super.debug(message, context) : super.debug(message);

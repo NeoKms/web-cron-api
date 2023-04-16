@@ -24,6 +24,7 @@ export const UPLOAD = checkStaticDirSync(
 
 export default () => ({
   PRODUCTION,
+  IS_TEST: env.NODE_ENV === 'test',
   SENTRY: env.SENTRY || false,
   PORT: parseInt(env.PORT) || 3001,
   DB: {

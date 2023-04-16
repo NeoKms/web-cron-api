@@ -15,6 +15,10 @@
     "sign_up": {
       "text": "Welcome to web cron, {fio}. your authorization data: login - {login}, password - {password}.",
       "subject": "Welcome to web cron."
+    },
+    "add_in_org": {
+      "text": "You were invited to the organization \"{org_name}\".",
+      "subject": "You have been invited to the organization."
     }
   }
 }

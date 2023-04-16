@@ -43,6 +43,10 @@ export type I18nTranslations = {
                 "text": string;
                 "subject": string;
             };
+            "add_in_org": {
+                "text": string;
+                "subject": string;
+            };
         };
     };
     "main": {

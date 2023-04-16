@@ -115,6 +115,8 @@ export class UserController {
     @Param('id') id: string,
     @UserProfile() user: ResponseUserDto,
   ): Promise<DefaultMessageDto> {
+    //todo если это пользователь, владеющий другой организацией, то его не деактивировать, а удалить из текущей организации
+    //todo права пользователя должны быть закреплены за конкретной организацией.
     await this.userService.remove(+id, user);
     return MESSAGE_OK;
   }

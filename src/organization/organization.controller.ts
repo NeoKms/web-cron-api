@@ -7,10 +7,12 @@ import {
   Get,
   Patch,
   Body,
+  HttpCode,
+  Post,
 } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { MWRDto } from '../helpers/interfaces/common';
+import { DefaultMessageDto, MWRDto } from '../helpers/interfaces/common';
 import ResponseOrgDto from './dto/response-org.dto';
 import { MESSAGE_OK } from '../helpers/constants';
 import { UserProfile } from '../helpers/decorators/user.decorator';
@@ -18,6 +20,7 @@ import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { Rights } from '../auth/passport/rights.decorator';
 import { plainToInstance } from 'class-transformer';
 import UpdateOrgDto from './dto/update-org.dto';
+import SendCodeDto from '../auth/dto/send-code.dto';
 
 @ApiTags('organization')
 @Controller('organization')
@@ -63,5 +66,20 @@ export class OrganizationController {
       await this.organizationService.update(+user.orgSelectedId, dto),
     );
     return { ...MESSAGE_OK, result };
+  }
+
+  @Rights({
+    entity: 'organization',
+    level: 'write',
+  })
+  @ApiResponse({ type: MWRDto<string> })
+  @HttpCode(200)
+  @Post('/invite')
+  async invite(
+    @Body() dto: SendCodeDto,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.organizationService.inviteUserByEmail(dto.email, user);
+    return MESSAGE_OK;
   }
 }

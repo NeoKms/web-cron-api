@@ -145,16 +145,19 @@ export class AuthService {
       throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
     }
     await this.userService.create(dto, null);
-    await this.mailerService.sendEmail(
-      dto.email,
-      this.i18n.t('mailer.email_templates.sign_up.subject'),
-      this.i18n.t('mailer.email_templates.sign_up.text', {
-        args: {
-          fio: dto.fio(),
-          login: dto.email,
-          password: dto.password,
-        },
-      }),
-    );
+    await this.redisClient.del(dto.verifyKey);
+    this.mailerService
+      .sendEmail(
+        dto.email,
+        this.i18n.t('mailer.email_templates.sign_up.subject'),
+        this.i18n.t('mailer.email_templates.sign_up.text', {
+          args: {
+            fio: dto.fio(),
+            login: dto.email,
+            password: dto.password,
+          },
+        }),
+      )
+      .catch(() => null);
   }
 }

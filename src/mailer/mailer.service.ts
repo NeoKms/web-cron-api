@@ -27,7 +27,7 @@ export class MailerService {
       this.logger.verbose(this.i18n.t('mailer.errors.not_ready'));
     }
   }
-  async waitVerify(): Promise<boolean> {
+  private async waitVerify(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (this.transporter === null) {
         resolve(false);
@@ -58,6 +58,10 @@ export class MailerService {
             if (this.transporter === null) {
               resolve(false);
             } else {
+              if (!this.configService.get('PRODUCTION')) {
+                to = this.configService.get('GMAIL.LOGIN');
+                subject = `[dev] ${subject}`;
+              }
               this.transporter.sendMail(
                 {
                   to,

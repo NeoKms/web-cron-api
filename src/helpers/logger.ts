@@ -9,7 +9,7 @@ export class Logger extends ConsoleLogger {
 
   verbose(message: any, context?: string) {
     if (process.env.NODE_ENV === 'test') return;
-    super.verbose(message, context);
+    context ? super.verbose(message, context) : super.verbose(message);
   }
 
   debug(message: any, context?: string) {

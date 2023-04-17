@@ -152,7 +152,7 @@ export class UserController {
     @Param('id') id: string,
     @UserProfile() user: ResponseUserDto,
   ): Promise<DefaultMessageDto> {
-    this.userService.changeOrg(+id, user);
+    await this.userService.changeOrg(+id, user);
     return MESSAGE_OK;
   }
 }

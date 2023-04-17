@@ -20,6 +20,7 @@ import { MailerService } from '../mailer/mailer.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SignUpDto } from './dto/sign-up.dto';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +67,7 @@ export class AuthService {
     const cantRetryKey = email + '_retry';
     const nowTs = getNowTimestampSec();
     const cantRetry = await this.redisClient.get(cantRetryKey);
-    if (cantRetry && !this.configService.get('IS_TEST')) {
+    if (cantRetry && !this.configService.get('PRODUCTION')) {
       throw new BadRequestException(
         this.i18n.t('auth.errors.send_code_retry', {
           args: { sec: parseInt(cantRetry) - nowTs },
@@ -105,21 +106,22 @@ export class AuthService {
     this.logger.log('login: ' + username);
     req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
     const user = await this.userService.findOne({ email: username });
-    user.login_cnt = user.login_cnt + 1;
+    const userToUpd = new User({ id: user.id });
+    userToUpd.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
-      user.login_timestamp = getNowTimestampSec();
-      user.login_cnt = 0;
-      user.banned_to = 0;
+      userToUpd.login_timestamp = getNowTimestampSec();
+      userToUpd.login_cnt = 0;
+      userToUpd.banned_to = 0;
       result = plainToClass(ResponseUserDto, user);
       this.deleteAllRedisSessionByUserId(user.id);
     }
-    if (user.login_cnt >= 5) {
-      const isFirst = user.banned_to === 0;
+    if (userToUpd.login_cnt >= 5) {
+      const isFirst = userToUpd.banned_to === 0;
       const timer = isFirst ? 3600 * 3 : 86400;
-      user.banned_to = getNowTimestampSec() + timer;
+      userToUpd.banned_to = getNowTimestampSec() + timer;
       result = isFirst ? -1 : -2;
     }
-    await this.userService.updateInternal(user.id, user);
+    await this.userService.updateInternal(user.id, userToUpd);
     return result;
   }
 
@@ -130,20 +132,22 @@ export class AuthService {
   }
 
   async checkLogin(user: ResponseUserDto): Promise<ResponseUserDto> {
-    const userInDb = await this.userService.findOne({ id: user.id });
-    if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
-      user.orgSelectedId = userInDb.orgSelectedId;
-    }
-    user.orgEntities = userInDb.orgEntities;
-    user.rights = userInDb.rights;
+    //todo
+    // const userInDb = await this.userService.findOne({ id: user.id });
+    // if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
+    //   user.orgSelectedId = userInDb.orgSelectedId;
+    // }
+    // user.orgEntities = userInDb.orgEntities;
+    // user.rights = userInDb.rights;
     return user;
   }
 
   async signUp(dto: SignUpDto) {
     const code = await this.redisClient.get(dto.verifyKey);
-    if (!code || +code !== dto.code) {
-      throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
-    }
+    //todo
+    // if (!code || +code !== dto.code) {
+    //   throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
+    // }
     await this.userService.create(dto, null);
     await this.redisClient.del(dto.verifyKey);
     this.mailerService

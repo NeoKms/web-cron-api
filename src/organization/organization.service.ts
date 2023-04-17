@@ -8,6 +8,7 @@ import { UserService } from '../user/user.service';
 import { MailerService } from '../mailer/mailer.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class OrganizationService {
@@ -30,10 +31,13 @@ export class OrganizationService {
   }
 
   async inviteUserByEmail(email: string, user: ResponseUserDto) {
-    const existUser = await this.userService.findOne({
-      email,
-      withoutError: true,
-    });
+    const existUser: ResponseUserDto = plainToInstance(
+      ResponseUserDto,
+      await this.userService.findOne({
+        email,
+        withoutError: true,
+      }),
+    );
     if (
       existUser &&
       !existUser.orgEntities.find((org) => org.id === user.orgSelectedId)

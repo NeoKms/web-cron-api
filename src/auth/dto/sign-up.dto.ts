@@ -24,10 +24,6 @@ export class SignUpDto extends CreateUserDto {
 
   public toEntity(): User {
     const it = new User({});
-    it.rights = Object.keys(defaultRights).reduce((acc, key) => {
-      acc[key] = 2;
-      return acc;
-    }, {});
     it.fio = this.fio();
     if (this.phone) {
       it.phone = this.phone;

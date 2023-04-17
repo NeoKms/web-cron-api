@@ -14,29 +14,29 @@ import { Organization } from '../../organization/entities/organization.entity';
 @Index(['host', 'username'], { unique: true })
 export class Ssh {
   @PrimaryGeneratedColumn()
-  public id: number;
+  id: number;
   @Column('text')
-  public host: string;
+  host: string;
   @Column({ type: 'int', default: 22 })
-  public port: number;
+  port: number;
   @Column('text')
-  public username: string;
+  username: string;
   @Column({ type: 'text', default: '' })
-  public description: string;
+  description: string;
   @Column({ type: 'int' })
-  public created_at: number;
+  created_at: number;
   @Column({ type: 'int', nullable: true })
-  public updated_at: number;
+  updated_at: number;
   @Column({ type: 'int', nullable: true })
-  public deleted_at: number;
+  deleted_at: number;
   @ManyToOne(() => Organization, {
     onDelete: 'RESTRICT',
     onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'orgEntityId' })
-  public orgEntity: Organization;
+  orgEntity: Organization;
   @Column()
-  public orgEntityId: number;
+  orgEntityId: number;
   @OneToMany(() => Job, (job) => job.sshEntity)
-  public jobEntities: Job[];
+  jobEntities: Job[];
 }

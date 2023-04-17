@@ -66,9 +66,7 @@ export class UpdateUserDto {
     if (this.fio()) {
       entity.fio = this.fio();
     }
-    if (this.rights) {
-      entity.rights = this.rights;
-    }
+    //todo upd rights
     if (this.phone) {
       entity.phone = this.phone;
     }

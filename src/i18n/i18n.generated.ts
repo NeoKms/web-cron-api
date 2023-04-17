@@ -10,6 +10,8 @@ export type I18nTranslations = {
         "errors": {
             "wrong_login_or_password": string;
             "ban_login": string;
+            "send_code_retry": string;
+            "code_error": string;
         };
     };
     "job": {
@@ -21,6 +23,30 @@ export type I18nTranslations = {
     "log": {
         "errors": {
             "not_found": string;
+        };
+    };
+    "mailer": {
+        "messages": {
+            "ready": string;
+        };
+        "errors": {
+            "not_ready": string;
+            "cant_send": string;
+            "cant_verify": string;
+        };
+        "email_templates": {
+            "send_code": {
+                "text": string;
+                "subject": string;
+            };
+            "sign_up": {
+                "text": string;
+                "subject": string;
+            };
+            "add_in_org": {
+                "text": string;
+                "subject": string;
+            };
         };
     };
     "main": {
@@ -59,7 +85,7 @@ export type I18nTranslations = {
             "bad_req": string;
             "not_found": string;
             "org_change": string;
-            "duplicate_login": string;
+            "duplicate_email": string;
         };
     };
 };

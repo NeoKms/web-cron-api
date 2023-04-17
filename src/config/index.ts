@@ -24,6 +24,7 @@ export const UPLOAD = checkStaticDirSync(
 
 export default () => ({
   PRODUCTION,
+  IS_TEST: env.NODE_ENV === 'test',
   SENTRY: env.SENTRY || false,
   PORT: parseInt(env.PORT) || 3001,
   DB: {
@@ -42,6 +43,11 @@ export default () => ({
     logger: 'file',
   } as TypeOrmModuleOptions,
   UPLOAD,
+  GMAIL: {
+    LOGIN: env.GMAIL_EMAIL,
+    KEY: env.GMAIL_KEY,
+  },
+  GOOGLE_GMAIL_API_KEY: env.GOOGLE_GMAIL_API_KEY,
   U_DIRS: {
     keys: checkStaticDir(UPLOAD + 'keys/'),
   },

@@ -10,7 +10,7 @@ import * as cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
 import config from '../src/config';
-import { copyObj, defaultRights, sleep } from '../src/helpers/constants';
+import { sleep } from '../src/helpers/constants';
 import conDs from '../src/config/ormconfig';
 import * as fs from 'fs';
 import * as process from 'process';
@@ -24,12 +24,12 @@ const checkBody = (body, withResult = true) => {
   expect(body.message).toBe('ok');
   return body.result;
 };
-const checkCookie = (response) => {
+const checkCookie = (response, to) => {
   expect(response.headers).toHaveProperty('set-cookie');
   expect(response.headers['set-cookie']).toHaveLength(1);
   const [ck] = response.headers['set-cookie'][0].split('=');
   expect(ck).toBe(config().SESSION.key);
-  authCookieHeader.cookie = response.headers['set-cookie'][0];
+  to.cookie = response.headers['set-cookie'][0];
 };
 const clearTestDb = async () => {
   rootConnection = await conDs.initialize();
@@ -41,26 +41,48 @@ const clearTestDb = async () => {
 const authCookieHeader = {
   cookie: 'authCookie',
 };
-const mocUserLogin = {
-  username: 'admin',
-  password: 'admin',
+const mocUserSignUp = {
+  id: null,
+  name: 'test',
+  surname: 'test',
+  secondname: 'test',
+  phone: '+79111111111',
+  password: '123456',
+  email: 'test@gmail.com',
+  verifyKey: '',
+  code: 1,
+  orgSelectedId: 1,
 };
-const mocUserLoginFailed = {
-  username: 'admin',
-  password: 'admin2',
+const mocUserSignUp2 = {
+  id: null,
+  name: 'test',
+  surname: 'test',
+  secondname: 'test',
+  phone: '+79111111113',
+  password: '123456',
+  email: 'test3@gmail.com',
+  verifyKey: '',
+  code: 1,
 };
 const mocUserCreate = {
   id: null,
   name: 'test',
   surname: 'test',
   secondname: 'test',
-  phone: '79999999999',
+  phone: '+79111111112',
   password: '123456',
-  rights: copyObj(defaultRights),
-  login: 'test.test',
+  email: 'test2@gmail.com',
+};
+const mocUserLogin = {
+  username: mocUserSignUp.email,
+  password: mocUserSignUp.password,
+};
+const mocUserLoginFailed = {
+  username: mocUserSignUp.email,
+  password: 'aaa',
 };
 const mocUserAuthFailed = {
-  username: mocUserCreate.login,
+  username: mocUserCreate.email,
   password: mocUserCreate.password + '1',
 };
 const mocSshCreate = {
@@ -153,6 +175,23 @@ describe('App (e2e)', () => {
     it(`[failed][GET] auth/checkLogin`, () => {
       return request(app.getHttpServer()).get('/auth/checkLogin').expect(403);
     });
+    it('[POST] auth/sendCode', () => {
+      return request(app.getHttpServer())
+        .post('/auth/sendCode')
+        .send(mocUserSignUp)
+        .expect(200)
+        .then(({ body }) => {
+          mocUserSignUp.verifyKey = checkBody(body);
+          expect(mocUserSignUp.verifyKey.length).toBeGreaterThan(1);
+        });
+    });
+    it('[POST] auth/signup', () => {
+      return request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(mocUserSignUp)
+        .expect(200)
+        .then(({ body }) => checkBody(body, false));
+    });
     it(`[failed][POST] auth/login`, async () => {
       return request(app.getHttpServer())
         .post('/auth/login')
@@ -166,8 +205,8 @@ describe('App (e2e)', () => {
         .expect(200)
         .then((response) => {
           const result = checkBody(response.body);
-          expect(result.login).toBe('admin');
-          checkCookie(response);
+          expect(result.email).toBe(mocUserSignUp.email);
+          checkCookie(response, authCookieHeader);
         });
     });
     it(`[GET] auth/checkLogin`, () => {
@@ -177,7 +216,7 @@ describe('App (e2e)', () => {
         .expect(200)
         .then(({ body }) => {
           const result = checkBody(body);
-          expect(result.login).toBe('admin');
+          expect(result.email).toBe(mocUserSignUp.email);
         });
     });
     it(`[GET] auth/logout`, () => {
@@ -188,7 +227,10 @@ describe('App (e2e)', () => {
         .then(({ body }) => checkBody(body, false));
     });
     it(`[failed][GET] auth/checkLogin`, () => {
-      return request(app.getHttpServer()).get('/auth/checkLogin').expect(403);
+      return request(app.getHttpServer())
+        .get('/auth/checkLogin')
+        .set(authCookieHeader)
+        .expect(403);
     });
   });
 
@@ -201,8 +243,9 @@ describe('App (e2e)', () => {
           .expect(200)
           .then((response) => {
             const result = checkBody(response.body);
-            expect(result.login).toBe('admin');
-            checkCookie(response);
+            expect(result.email).toBe(mocUserSignUp.email);
+            checkCookie(response, authCookieHeader);
+            mocUserSignUp.orgSelectedId = result.orgSelectedId;
           });
       });
       it(`[POST] user`, () => {
@@ -213,7 +256,7 @@ describe('App (e2e)', () => {
           .expect(201)
           .then(({ body }) => {
             const result = checkBody(body);
-            expect(result.login).toBe(mocUserCreate.login);
+            expect(result.email).toBe(mocUserCreate.email);
           });
       });
       it(`[failed][POST] user`, () => {
@@ -231,7 +274,7 @@ describe('App (e2e)', () => {
           .then(({ body }) => {
             const result = checkBody(body);
             const ind = result.findIndex(
-              (e) => e.login === mocUserCreate.login,
+              (e) => e.email === mocUserCreate.email,
             );
             expect(ind).not.toBe(-1);
             mocUserCreate.id = result[ind].id;
@@ -244,13 +287,12 @@ describe('App (e2e)', () => {
           .expect(200)
           .then(({ body }) => {
             const result = checkBody(body);
-            expect(result.login).toBe(mocUserCreate.login);
+            expect(result.email).toBe(mocUserCreate.email);
           });
       });
       it(`[PATCH] user/:id`, () => {
         mocUserCreate.surname = 'tt';
-        mocUserCreate.rights = {};
-        mocUserCreate.phone = '7199999999';
+        mocUserCreate.phone = '+7199999999';
         mocUserCreate.name = 'tt';
         mocUserCreate.secondname = 'tt';
         return request(app.getHttpServer())
@@ -261,7 +303,7 @@ describe('App (e2e)', () => {
           .then(({ body }) => {
             const result = checkBody(body);
             expect(result.phone).toBe(mocUserCreate.phone);
-            expect(result.login).toBe(mocUserCreate.login);
+            expect(result.fio).toBe('tt tt tt');
           });
       });
       it(`[GET] user/:id/activate`, () => {
@@ -336,7 +378,7 @@ describe('App (e2e)', () => {
           .set(authCookieHeader)
           .expect(200)
           .then(({ body }) => {
-            const result = checkBody(body, false);
+            const result = checkBody(body);
             expect(result.active).toBe(false);
           });
       });
@@ -350,7 +392,7 @@ describe('App (e2e)', () => {
     });
   });
 
-  describe('{ssh,jobs,log}Controller', () => {
+  describe('{ssh,jobs,log,org}Controller', () => {
     describe('[ssh] Create/Update/Read', () => {
       it(`[POST] ssh`, () => {
         return request(app.getHttpServer())
@@ -467,6 +509,80 @@ describe('App (e2e)', () => {
           });
       });
     });
+
+    describe('[org] Invite and check Entities', () => {
+      it('[POST] auth/sendCode', () => {
+        return request(app.getHttpServer())
+          .post('/auth/sendCode')
+          .send(mocUserSignUp2)
+          .expect(200)
+          .then(({ body }) => {
+            mocUserSignUp2.verifyKey = checkBody(body);
+            expect(mocUserSignUp2.verifyKey.length).toBeGreaterThan(1);
+          });
+      });
+      it('[POST] auth/signup', () => {
+        return request(app.getHttpServer())
+          .post('/auth/signup')
+          .send(mocUserSignUp2)
+          .expect(200)
+          .then(({ body }) => checkBody(body, false));
+      });
+      it('[POST] organization/invite', () => {
+        return request(app.getHttpServer())
+          .post('/organization/invite')
+          .send({ email: mocUserSignUp2.email })
+          .set(authCookieHeader)
+          .expect(200)
+          .then((response) => checkBody(response.body, false));
+      });
+      const authCookieHeader2 = {
+        cookie: 'authCookie',
+      };
+      it(`[POST] auth/login`, () => {
+        return request(app.getHttpServer())
+          .post('/auth/login')
+          .send({
+            username: mocUserSignUp2.email,
+            password: mocUserSignUp2.password,
+          })
+          .expect(200)
+          .then((response) => {
+            const result = checkBody(response.body);
+            expect(result.email).toBe(mocUserSignUp2.email);
+            checkCookie(response, authCookieHeader2);
+          });
+      });
+      it(`[GET] user/organization/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/user/organization/' + mocUserSignUp.orgSelectedId)
+          .set(authCookieHeader2)
+          .expect(200)
+          .then((response) => checkBody(response.body, false));
+      });
+      it(`[GET] auth/checkLogin`, () => {
+        return request(app.getHttpServer())
+          .get('/auth/checkLogin')
+          .set(authCookieHeader2)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.email).toBe(mocUserSignUp2.email);
+          });
+      });
+      it(`[GET] ssh/:id`, () => {
+        return request(app.getHttpServer())
+          .get('/ssh/' + mocSshCreate.id)
+          .set(authCookieHeader2)
+          .expect(200)
+          .then(({ body }) => {
+            const result = checkBody(body);
+            expect(result.cntJobs).toBe(1);
+            expect(result.cntJobsActive).toBe(1);
+          });
+      });
+    });
+
     describe('[log]', () => {
       it(
         `[wait] 1m`,

@@ -20,7 +20,7 @@ export class ResponseUserDto {
 
   @Expose()
   @IsString()
-  public login: string;
+  public email: string;
 
   @Expose()
   @IsNumber()

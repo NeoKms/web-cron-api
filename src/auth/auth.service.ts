@@ -1,13 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
-import { getNowTimestampSec, hashPassword } from '../helpers/constants';
+import {
+  getNowTimestampSec,
+  hashCode,
+  hashPassword,
+} from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
 import { ReqWithUser } from '../helpers/interfaces/req';
 import { Logger } from '../helpers/logger';
+import { MailerService } from '../mailer/mailer.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,10 +30,11 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly mailerService: MailerService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     this.redisClient = redisService.getClient();
   }
-
   async deleteAllRedisSessionByUserId(id: number): Promise<void> {
     await this.redisClient
       .keys('sess:*')
@@ -43,6 +56,46 @@ export class AuthService {
       .catch((err) => this.logger.error(err));
   }
 
+  private generateCode() {
+    if (this.configService.get('IS_TEST')) return '1';
+    else return Math.floor(Math.random() * 100000000 + 1).toString();
+  }
+  async sendCode(email: string): Promise<string> {
+    const verifyKey = hashCode(email + Date.now().toString()).toString();
+    const code = this.generateCode();
+    const cantRetryKey = email + '_retry';
+    const nowTs = getNowTimestampSec();
+    const cantRetry = await this.redisClient.get(cantRetryKey);
+    if (cantRetry && !this.configService.get('IS_TEST')) {
+      throw new BadRequestException(
+        this.i18n.t('auth.errors.send_code_retry', {
+          args: { sec: parseInt(cantRetry) - nowTs },
+        }),
+      );
+    } else {
+      await this.redisClient.set(cantRetryKey, nowTs + 60, 'EX', 60);
+    }
+    const isExistEmail = await this.userService.findOne({
+      email,
+      withoutError: true,
+    });
+    if (isExistEmail) {
+      throw new BadRequestException(this.i18n.t('mailer.errors.cant_send'));
+    }
+    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
+    const sent = await this.mailerService.sendEmail(
+      email,
+      this.i18n.t('mailer.email_templates.send_code.subject'),
+      this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
+    );
+    if (!sent && !this.configService.get('IS_TEST')) {
+      throw new InternalServerErrorException(
+        this.i18n.t('mailer.errors.cant_send'),
+      );
+    }
+    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
+    return verifyKey;
+  }
   async login(
     username: string,
     password: string,
@@ -51,7 +104,7 @@ export class AuthService {
     let result = null;
     this.logger.log('login: ' + username);
     req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
-    const user = await this.userService.findOne({ login: username });
+    const user = await this.userService.findOne({ email: username });
     user.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
       user.login_timestamp = getNowTimestampSec();
@@ -84,5 +137,27 @@ export class AuthService {
     user.orgEntities = userInDb.orgEntities;
     user.rights = userInDb.rights;
     return user;
+  }
+
+  async signUp(dto: SignUpDto) {
+    const code = await this.redisClient.get(dto.verifyKey);
+    if (!code || +code !== dto.code) {
+      throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
+    }
+    await this.userService.create(dto, null);
+    await this.redisClient.del(dto.verifyKey);
+    this.mailerService
+      .sendEmail(
+        dto.email,
+        this.i18n.t('mailer.email_templates.sign_up.subject'),
+        this.i18n.t('mailer.email_templates.sign_up.text', {
+          args: {
+            fio: dto.fio(),
+            login: dto.email,
+            password: dto.password,
+          },
+        }),
+      )
+      .catch(() => null);
   }
 }

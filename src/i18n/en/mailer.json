@@ -1,0 +1,24 @@
+{
+  "messages": {
+    "ready": "Email sending system initialized"
+  },
+  "errors": {
+    "not_ready": "The email forwarding system is not enabled. add environment variables GMAIL_EMAIL and GMAIL_KEY",
+    "cant_send": "Failed to send verification code",
+    "cant_verify": "email system availability check ended with an error"
+  },
+  "email_templates": {
+    "send_code": {
+      "text": "Greetings. Your web cron account verification code is <b>{code}</b>.",
+      "subject": "Web cron account verification code."
+    },
+    "sign_up": {
+      "text": "Welcome to web cron, {fio}. your authorization data: login - {login}, password - {password}.",
+      "subject": "Welcome to web cron."
+    },
+    "add_in_org": {
+      "text": "You were invited to the organization \"{org_name}\".",
+      "subject": "You have been invited to the organization."
+    }
+  }
+}

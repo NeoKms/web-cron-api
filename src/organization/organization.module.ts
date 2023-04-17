@@ -4,12 +4,12 @@ import { OrganizationController } from './organization.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
 import { UserModule } from '../user/user.module';
-import { MailerService } from '../mailer/mailer.service';
+import { MailerModule } from '../mailer/mailer.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Organization]), UserModule],
+  imports: [TypeOrmModule.forFeature([Organization]), UserModule, MailerModule],
   controllers: [OrganizationController],
-  providers: [OrganizationService, MailerService],
+  providers: [OrganizationService],
   exports: [OrganizationService],
 })
 export class OrganizationModule {}

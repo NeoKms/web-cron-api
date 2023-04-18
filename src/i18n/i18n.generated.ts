@@ -86,6 +86,7 @@ export type I18nTranslations = {
             "not_found": string;
             "org_change": string;
             "duplicate_email": string;
+            "need_a_user": string;
         };
     };
 };

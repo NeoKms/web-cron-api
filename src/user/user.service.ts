@@ -38,8 +38,7 @@ export class UserService {
     let newUserEntity = null;
     const isSignUp = userDto instanceof SignUpDto;
     if (!isSignUp && user === null) {
-      //todo
-      throw new BadRequestException('need a user');
+      throw new BadRequestException(this.i18n.t('user.errors.need_a_user'));
     }
     await this.dataSource.transaction(async (manager) => {
       manager = manager2 ? manager2 : manager;

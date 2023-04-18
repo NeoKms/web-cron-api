@@ -26,6 +26,7 @@ import { User } from '../user/entities/user.entity';
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly redisClient: Redis.Redis;
+  private readonly VerifyKeyByEmail = new Map();
 
   constructor(
     private readonly userService: UserService,
@@ -83,18 +84,13 @@ export class AuthService {
     if (isExistEmail) {
       throw new BadRequestException(this.i18n.t('mailer.errors.cant_send'));
     }
+    this.VerifyKeyByEmail.set(email, verifyKey);
     await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
-    const sent = await this.mailerService.sendEmail(
+    this.mailerService.sendEmail(
       email,
       this.i18n.t('mailer.email_templates.send_code.subject'),
       this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
     );
-    if (!sent && !this.configService.get('IS_TEST')) {
-      throw new InternalServerErrorException(
-        this.i18n.t('mailer.errors.cant_send'),
-      );
-    }
-    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
     return verifyKey;
   }
   async login(
@@ -132,22 +128,21 @@ export class AuthService {
   }
 
   async checkLogin(user: ResponseUserDto): Promise<ResponseUserDto> {
-    //todo
-    // const userInDb = await this.userService.findOne({ id: user.id });
-    // if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
-    //   user.orgSelectedId = userInDb.orgSelectedId;
-    // }
-    // user.orgEntities = userInDb.orgEntities;
-    // user.rights = userInDb.rights;
+    const userInDb = await this.userService.findOne({ id: user.id });
+    if (!userInDb.orgEntities.find((org) => org.id === user.orgSelectedId)) {
+      user.orgSelectedId = userInDb.orgSelectedId;
+    }
+    user.orgEntities = userInDb.orgEntities;
+    user.rights = userInDb.rights;
     return user;
   }
 
   async signUp(dto: SignUpDto) {
     const code = await this.redisClient.get(dto.verifyKey);
-    //todo
-    // if (!code || +code !== dto.code) {
-    //   throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
-    // }
+    const VerifyKeyByEmail = this.VerifyKeyByEmail.get(dto.email);
+    if (VerifyKeyByEmail !== dto.verifyKey || !code || +code !== dto.code) {
+      throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
+    }
     await this.userService.create(dto, null);
     await this.redisClient.del(dto.verifyKey);
     this.mailerService

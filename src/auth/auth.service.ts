@@ -89,6 +89,7 @@ export class AuthService {
     );
     return verifyKey;
   }
+
   async login(
     username: string,
     password: string,
@@ -114,6 +115,13 @@ export class AuthService {
       result = isFirst ? -1 : -2;
     }
     await this.userService.updateInternal(user.id, userToUpd);
+    const { inviteCode } = req.body;
+    if (result instanceof ResponseUserDto && inviteCode) {
+      const orgId = await this.redisClient.get(inviteCode).then((res) => +res);
+      if (orgId > 0) {
+        await this.userService.acceptInviteCode(result, orgId);
+      }
+    }
     return result;
   }
 

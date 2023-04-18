@@ -9,16 +9,24 @@ import { MailerService } from '../mailer/mailer.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { plainToInstance } from 'class-transformer';
+import { RedisService } from 'nestjs-redis';
+import * as Redis from 'ioredis';
+import { md5 } from '../helpers/constants';
 
 @Injectable()
 export class OrganizationService {
+  private readonly redisClient: Redis.Redis;
+  private readonly INVITE_CODE_EXPIRES_SEC = 2 * 24 * 60 * 60;
   constructor(
     @InjectRepository(Organization)
     private readonly orgRepository: Repository<Organization>,
     private readonly userService: UserService,
     private readonly mailerService: MailerService,
     private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+    private readonly redisService: RedisService,
+  ) {
+    this.redisClient = redisService.getClient();
+  }
 
   getById(id: number): Promise<Organization> {
     return this.orgRepository.findOne({ where: { id } });
@@ -35,28 +43,38 @@ export class OrganizationService {
       ResponseUserDto,
       await this.userService.findOne({
         email,
+        onlyActive: null,
         withoutError: true,
       }),
     );
     if (
-      existUser &&
-      !existUser.orgEntities.find((org) => org.id === user.orgSelectedId)
+      (existUser &&
+        !existUser.orgEntities.find((org) => org.id === user.orgSelectedId)) ||
+      !existUser
     ) {
       const orgEntity = user.orgEntities.find(
         (org) => org.id === user.orgSelectedId,
       );
-      await this.orgRepository
-        .createQueryBuilder()
-        .relation(Organization, 'userEntities')
-        .of({ id: user.orgSelectedId })
-        .add(existUser);
+      const inviteCode = md5(email + Date.now());
+      await this.redisClient.set(
+        inviteCode,
+        user.orgSelectedId.toString(),
+        'EX',
+        this.INVITE_CODE_EXPIRES_SEC,
+      );
       this.mailerService
         .sendEmail(
           email,
-          this.i18n.t('mailer.email_templates.add_in_org.subject'),
+          this.i18n.t('mailer.email_templates.add_in_org.subject', {
+            args: {
+              org_name: orgEntity.name,
+            },
+          }),
           this.i18n.t('mailer.email_templates.add_in_org.text', {
             args: {
               org_name: orgEntity.name,
+              code: inviteCode,
+              hours: this.INVITE_CODE_EXPIRES_SEC / (60 * 60),
             },
           }),
         )

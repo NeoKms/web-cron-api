@@ -21,7 +21,7 @@ export const defaultRights: RightsDto = {
 };
 export const MESSAGE_OK = { message: 'ok' };
 
-const md5 = (x: string): string =>
+export const md5 = (x: string): string =>
   crypto.createHash('md5').update(x).digest('hex');
 export const hashPassword = (password: string): string =>
   md5(config().SESSION.secret + md5(password) + md5(config().SESSION.secret));

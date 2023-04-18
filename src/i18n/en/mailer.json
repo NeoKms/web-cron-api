@@ -17,8 +17,8 @@
       "subject": "Welcome to web cron."
     },
     "add_in_org": {
-      "text": "You were invited to the organization \"{org_name}\".",
-      "subject": "You have been invited to the organization."
+      "subject": "You were invited to the organization \"{org_name}\".",
+      "text": "You have been invited to the organization \"{org_name}\".\nInvite code is {code}. The code is valid for {hours} hours."
     }
   }
 }

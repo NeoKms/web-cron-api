@@ -20,7 +20,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
   }
 
   async validate(
-    req: XMLHttpRequest,
+    req: XMLHttpRequest & { body: any },
     username: string,
     password: string,
   ): Promise<any> {

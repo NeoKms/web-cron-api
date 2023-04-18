@@ -44,8 +44,8 @@ export type I18nTranslations = {
                 "subject": string;
             };
             "add_in_org": {
-                "text": string;
                 "subject": string;
+                "text": string;
             };
         };
     };

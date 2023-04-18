@@ -17,7 +17,6 @@ import { Organization } from '../organization/entities/organization.entity';
 import { ResponseUserDto } from './dto/response-user.dto';
 import { UsersInOrganizationEntity } from '../organization/entities/usersInOrganization.entity';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -28,7 +27,6 @@ export class UserService {
     private readonly usersInOrgRepository: Repository<UsersInOrganizationEntity>,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -319,5 +317,16 @@ export class UserService {
     } else {
       throw new BadRequestException(this.i18n.t('user.errors.org_change'));
     }
+  }
+
+  async acceptInviteCode(user: ResponseUserDto, orgId: number): Promise<void> {
+    await this.usersInOrgRepository.save(
+      this.usersInOrgRepository.create({
+        userEntityId: user.id,
+        organizationEntityId: orgId,
+        rights: defaultRights,
+        isActive: true,
+      }),
+    );
   }
 }

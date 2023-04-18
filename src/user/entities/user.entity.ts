@@ -1,12 +1,10 @@
 import {
   Column,
   Entity,
-  ManyToMany,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { defaultRights } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
 import { Organization } from '../../organization/entities/organization.entity';
 import { UsersInOrganizationEntity } from '../../organization/entities/usersInOrganization.entity';

@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { User } from '../../user/entities/user.entity';
-import { defaultRights, hashPassword } from '../../helpers/constants';
+import { hashPassword } from '../../helpers/constants';
 import { CreateUserDto } from '../../user/dto/create-user.dto';
 
 @Exclude()

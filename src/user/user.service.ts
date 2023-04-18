@@ -17,7 +17,7 @@ import { Organization } from '../organization/entities/organization.entity';
 import { ResponseUserDto } from './dto/response-user.dto';
 import { UsersInOrganizationEntity } from '../organization/entities/usersInOrganization.entity';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
-import { plainToInstance } from 'class-transformer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -28,6 +28,7 @@ export class UserService {
     private readonly usersInOrgRepository: Repository<UsersInOrganizationEntity>,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -106,17 +107,26 @@ export class UserService {
         );
       }
     });
+    if (!isSignUp) {
+      //todo send email about new user in org
+      //todo send email to admin about new user
+    }
     return newUserEntity;
   }
 
   async findAll(user: ResponseUserDto): Promise<User[]> {
-    return this.userRepository.find({
+    const users = await this.userRepository.find({
+      relations: ['userInOrganizationEntities'],
       where: {
         userInOrganizationEntities: {
           organizationEntityId: user.orgSelectedId,
         },
       },
     });
+    users.forEach((user) => {
+      user.isActive = user.userInOrganizationEntities[0].isActive;
+    });
+    return users;
   }
 
   async findOne(
@@ -142,9 +152,7 @@ export class UserService {
       .innerJoinAndSelect(
         'user.userInOrganizationEntities',
         'orgNow',
-        `${
-          orgId ? 'orgNow.organizationEntityId= :orgId and' : ''
-        } orgNow.userEntityId = user.id`,
+        `${orgId ? 'orgNow.organizationEntityId= :orgId' : ''}`,
         { orgId: orgId },
       );
     if (onlyActive !== null) {
@@ -152,7 +160,9 @@ export class UserService {
         active: typeof onlyActive === 'undefined' ? true : onlyActive,
       });
       if (!orgId) {
-        where.banned_to = LessThan(getNowTimestampSec());
+        qb.andWhere({
+          banned_to: LessThan(getNowTimestampSec()),
+        });
       }
     }
     if (!orgId) {
@@ -194,7 +204,10 @@ export class UserService {
     manager?: EntityManager,
   ): Promise<User> {
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    await this.findOne(
+    const repoUserInOrg = manager
+      ? manager.getRepository(UsersInOrganizationEntity)
+      : this.usersInOrgRepository;
+    const existUser = await this.findOne(
       { id, onlyActive: null, orgId: user.orgSelectedId },
       manager,
     );
@@ -215,18 +228,47 @@ export class UserService {
       }
     }
     await repo.save(userEntityToUpd);
-    return this.findOne({ id }, manager);
+    const [nowUserInOrgEntity] = existUser.userInOrganizationEntities;
+    if (
+      JSON.stringify(nowUserInOrgEntity.rights) !==
+      JSON.stringify(updateUserDto.rights)
+    ) {
+      await repoUserInOrg.update(
+        {
+          userEntityId: id,
+          organizationEntityId: user.orgSelectedId,
+        },
+        {
+          rights: updateUserDto.rights,
+        },
+      );
+    }
+    return this.findOne(
+      { id, onlyActive: null, orgId: user.orgSelectedId },
+      manager,
+    );
   }
 
-  async remove(
+  async deactivate(
     id: number,
     user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<void> {
-    //todo
-    // await this.findOne({ id, orgId: user.orgSelectedId }, manager);
-    // const repo = manager ? manager.getRepository(User) : this.userRepository;
-    // await repo.update(id, repo.create({ active: false, rights: {} }));
+    const userInfo = await this.findOne(
+      { id, onlyActive: true, orgId: user.orgSelectedId },
+      manager,
+    );
+    const [orgInfo] = userInfo.userInOrganizationEntities;
+    const repo = manager
+      ? manager.getRepository(UsersInOrganizationEntity)
+      : this.usersInOrgRepository;
+    await repo.update(
+      {
+        userEntityId: orgInfo.userEntityId,
+        organizationEntityId: orgInfo.organizationEntityId,
+      },
+      repo.create({ isActive: false, rights: defaultRights }),
+    );
   }
 
   async activate(
@@ -234,13 +276,21 @@ export class UserService {
     user: ResponseUserDto,
     manager?: EntityManager,
   ): Promise<void> {
-    //todo
-    // await this.findOne(
-    //   { id, onlyActive: false, orgId: user.orgSelectedId },
-    //   manager,
-    // );
-    // const repo = manager ? manager.getRepository(User) : this.userRepository;
-    // await repo.update(id, repo.create({ active: true }));
+    const userInfo = await this.findOne(
+      { id, onlyActive: false, orgId: user.orgSelectedId },
+      manager,
+    );
+    const [orgInfo] = userInfo.userInOrganizationEntities;
+    const repo = manager
+      ? manager.getRepository(UsersInOrganizationEntity)
+      : this.usersInOrgRepository;
+    await repo.update(
+      {
+        userEntityId: orgInfo.userEntityId,
+        organizationEntityId: orgInfo.organizationEntityId,
+      },
+      repo.create({ isActive: true }),
+    );
   }
 
   async unban(

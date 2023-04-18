@@ -3,6 +3,7 @@ import {
   IsDefined,
   IsObject,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
   MinLength,
@@ -47,8 +48,7 @@ export class UpdateUserDto {
   @Expose()
   @IsString()
   @IsOptional()
-  @MinLength(4)
-  @MaxLength(25)
+  @IsPhoneNumber()
   public phone?: string;
 
   @Expose()
@@ -66,7 +66,6 @@ export class UpdateUserDto {
     if (this.fio()) {
       entity.fio = this.fio();
     }
-    //todo upd rights
     if (this.phone) {
       entity.phone = this.phone;
     }

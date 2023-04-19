@@ -69,17 +69,14 @@ export class CreateUserDto {
   email: string;
 
   @Expose()
-  public fio(): string {
+  fio(): string {
     return `${this.surname} ${this.name}${
       this.secondname ? ' ' + this.secondname : ''
     }`;
   }
 
-  public toEntity(): User {
+  toEntity(): User {
     const it = new User({});
-    if (this.rights) {
-      it.rights = this.rights;
-    }
     it.fio = this.fio();
     if (this.phone) {
       it.phone = this.phone;

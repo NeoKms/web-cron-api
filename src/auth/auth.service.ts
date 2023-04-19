@@ -1,16 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
-import {
-  getNowTimestampSec,
-  hashCode,
-  hashPassword,
-} from '../helpers/constants';
+import { getNowTimestampSec, hashPassword, md5 } from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
@@ -20,11 +12,14 @@ import { MailerService } from '../mailer/mailer.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SignUpDto } from './dto/sign-up.dto';
+import { User } from '../user/entities/user.entity';
+import { InviteCodeData } from '../helpers/interfaces/common';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly redisClient: Redis.Redis;
+  private readonly VerifyKeyByEmail = new Map();
 
   constructor(
     private readonly userService: UserService,
@@ -61,12 +56,12 @@ export class AuthService {
     else return Math.floor(Math.random() * 100000000 + 1).toString();
   }
   async sendCode(email: string): Promise<string> {
-    const verifyKey = hashCode(email + Date.now().toString()).toString();
+    const verifyKey = md5(email + Date.now().toString()).toString();
     const code = this.generateCode();
     const cantRetryKey = email + '_retry';
     const nowTs = getNowTimestampSec();
     const cantRetry = await this.redisClient.get(cantRetryKey);
-    if (cantRetry && !this.configService.get('IS_TEST')) {
+    if (cantRetry && !this.configService.get('PRODUCTION')) {
       throw new BadRequestException(
         this.i18n.t('auth.errors.send_code_retry', {
           args: { sec: parseInt(cantRetry) - nowTs },
@@ -82,20 +77,16 @@ export class AuthService {
     if (isExistEmail) {
       throw new BadRequestException(this.i18n.t('mailer.errors.cant_send'));
     }
+    this.VerifyKeyByEmail.set(email, verifyKey);
     await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
-    const sent = await this.mailerService.sendEmail(
+    this.mailerService.sendEmail(
       email,
       this.i18n.t('mailer.email_templates.send_code.subject'),
       this.i18n.t('mailer.email_templates.send_code.text', { args: { code } }),
     );
-    if (!sent && !this.configService.get('IS_TEST')) {
-      throw new InternalServerErrorException(
-        this.i18n.t('mailer.errors.cant_send'),
-      );
-    }
-    await this.redisClient.set(verifyKey, code, 'EX', 20 * 60);
     return verifyKey;
   }
+
   async login(
     username: string,
     password: string,
@@ -105,21 +96,38 @@ export class AuthService {
     this.logger.log('login: ' + username);
     req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
     const user = await this.userService.findOne({ email: username });
-    user.login_cnt = user.login_cnt + 1;
+    const userToUpd = new User({ id: user.id });
+    userToUpd.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {
-      user.login_timestamp = getNowTimestampSec();
-      user.login_cnt = 0;
-      user.banned_to = 0;
+      userToUpd.login_timestamp = getNowTimestampSec();
+      userToUpd.login_cnt = 0;
+      userToUpd.banned_to = 0;
       result = plainToClass(ResponseUserDto, user);
       this.deleteAllRedisSessionByUserId(user.id);
     }
-    if (user.login_cnt >= 5) {
-      const isFirst = user.banned_to === 0;
+    if (userToUpd.login_cnt >= 5) {
+      const isFirst = userToUpd.banned_to === 0;
       const timer = isFirst ? 3600 * 3 : 86400;
-      user.banned_to = getNowTimestampSec() + timer;
+      userToUpd.banned_to = getNowTimestampSec() + timer;
       result = isFirst ? -1 : -2;
     }
-    await this.userService.updateInternal(user.id, user);
+    await this.userService.updateInternal(user.id, userToUpd);
+    const { inviteCode } = req.body;
+    if (result instanceof ResponseUserDto && inviteCode) {
+      const inviteCodeData = await this.redisClient
+        .get(inviteCode)
+        .then((res) => {
+          if (res) {
+            return JSON.parse(res) as InviteCodeData;
+          } else {
+            return false;
+          }
+        });
+      if (inviteCodeData !== false && result.email === inviteCodeData.email) {
+        await this.userService.acceptInviteCode(result, inviteCodeData.orgId);
+        await this.redisClient.del(inviteCode);
+      }
+    }
     return result;
   }
 
@@ -141,7 +149,8 @@ export class AuthService {
 
   async signUp(dto: SignUpDto) {
     const code = await this.redisClient.get(dto.verifyKey);
-    if (!code || +code !== dto.code) {
+    const VerifyKeyByEmail = this.VerifyKeyByEmail.get(dto.email);
+    if (VerifyKeyByEmail !== dto.verifyKey || !code || +code !== dto.code) {
       throw new BadRequestException(this.i18n.t('auth.errors.code_error'));
     }
     await this.userService.create(dto, null);

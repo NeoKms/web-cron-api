@@ -7,10 +7,6 @@ import { Organization } from '../../organization/entities/organization.entity';
 export class ResponseUserDto {
   @Expose()
   @IsNumber()
-  public login_cnt: number;
-
-  @Expose()
-  @IsNumber()
   public banned_to: number;
 
   @Expose()
@@ -36,14 +32,14 @@ export class ResponseUserDto {
 
   @Expose()
   @IsBoolean()
-  public active: boolean;
+  public isActive?: boolean;
 
   @Expose()
   @IsObject({ each: true })
   @Type(() => Organization)
-  public orgEntities: Organization[];
+  public orgEntities?: Organization[];
 
   @Expose()
   @IsNumber()
-  public orgSelectedId: number;
+  public orgSelectedId?: number;
 }

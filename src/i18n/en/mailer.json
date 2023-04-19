@@ -9,16 +9,20 @@
   },
   "email_templates": {
     "send_code": {
-      "text": "Greetings. Your web cron account verification code is <b>{code}</b>.",
-      "subject": "Web cron account verification code."
+      "subject": "Web cron account verification code.",
+      "text": "Greetings. Your web cron account verification code is <b>{code}</b>."
     },
     "sign_up": {
-      "text": "Welcome to web cron, {fio}. your authorization data: login - {login}, password - {password}.",
-      "subject": "Welcome to web cron."
+      "subject": "Welcome to web cron.",
+      "text": "Welcome to web cron, {fio}. your authorization data: login - {login}, password - {password}."
+    },
+    "about_new_user": {
+      "subject": "A new person has been added to the organization \"{org_name}\".",
+      "text": "New person:\n{name}\n{email}"
     },
     "add_in_org": {
-      "text": "You were invited to the organization \"{org_name}\".",
-      "subject": "You have been invited to the organization."
+      "subject": "You were invited to the organization \"{org_name}\".",
+      "text": "You have been invited to the organization \"{org_name}\".\nInvite code is {code}. The code is valid for {hours} hours."
     }
   }
 }

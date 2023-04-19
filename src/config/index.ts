@@ -47,7 +47,10 @@ export default () => ({
     LOGIN: env.GMAIL_EMAIL,
     KEY: env.GMAIL_KEY,
   },
-  GOOGLE_GMAIL_API_KEY: env.GOOGLE_GMAIL_API_KEY,
+  SSH: {
+    SECRET_KEY: env.SECRET_KEY || '123',
+    SALT: env.COOKIE_SECRET || '123',
+  },
   U_DIRS: {
     keys: checkStaticDir(UPLOAD + 'keys/'),
   },

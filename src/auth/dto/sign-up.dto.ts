@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { User } from '../../user/entities/user.entity';
-import { defaultRights, hashPassword } from '../../helpers/constants';
+import { hashPassword } from '../../helpers/constants';
 import { CreateUserDto } from '../../user/dto/create-user.dto';
 
 @Exclude()
@@ -24,10 +24,6 @@ export class SignUpDto extends CreateUserDto {
 
   public toEntity(): User {
     const it = new User({});
-    it.rights = Object.keys(defaultRights).reduce((acc, key) => {
-      acc[key] = 2;
-      return acc;
-    }, {});
     it.fio = this.fio();
     if (this.phone) {
       it.phone = this.phone;

@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 @Exclude()
 export class LoginDto {
@@ -14,4 +14,11 @@ export class LoginDto {
   @IsNotEmpty()
   @MaxLength(100)
   password: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @MaxLength(100)
+  inviteCode?: string;
 }

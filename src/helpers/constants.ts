@@ -21,12 +21,33 @@ export const defaultRights: RightsDto = {
 };
 export const MESSAGE_OK = { message: 'ok' };
 
-const md5 = (x: string): string =>
+export const md5 = (x: string): string =>
   crypto.createHash('md5').update(x).digest('hex');
 export const hashPassword = (password: string): string =>
   md5(config().SESSION.secret + md5(password) + md5(config().SESSION.secret));
 export const getNowTimestampSec = (): number => {
   return Math.round(Date.now() / 1000);
+};
+
+export const cipher = (str: string): string => {
+  const iv = crypto.randomBytes(16);
+  const key = crypto.scryptSync(config().SSH.SECRET_KEY, config().SSH.SALT, 32);
+  const res = crypto
+    .createCipheriv('aes-256-ctr', key, iv)
+    .update(str, 'utf8', 'hex');
+  return res + '/' + Array.from(iv).join('.');
+};
+export const decipher = (str: string): string => {
+  const iv = Buffer.from(
+    str
+      .split('/')[1]
+      .split('.')
+      .map((el) => +el),
+  );
+  const key = crypto.scryptSync(config().SSH.SECRET_KEY, config().SSH.SALT, 32);
+  return crypto
+    .createDecipheriv('aes-256-ctr', key, iv)
+    .update(str, 'hex', 'utf8');
 };
 export const copyObj = (obj: any) => JSON.parse(JSON.stringify(obj));
 
@@ -76,17 +97,4 @@ export const fillOptionsByParams = (params, options): void => {
       options.skip < 0 && delete options.skip;
     }
   }
-};
-
-export const hashCode = (str) => {
-  let hash = 0,
-    i,
-    chr;
-  if (str.length === 0) return hash;
-  for (i = 0; i < str.length; i++) {
-    chr = str.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0;
-  }
-  return hash;
 };

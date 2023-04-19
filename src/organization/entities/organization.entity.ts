@@ -2,37 +2,39 @@ import {
   Column,
   Entity,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { UsersInOrganizationEntity } from './usersInOrganization.entity';
 
 @Entity()
 export class Organization {
   @PrimaryGeneratedColumn()
-  public id: number;
+  id: number;
 
   @Column({ type: 'text', nullable: false })
-  public name: string;
+  name: string;
 
   @Column({ type: 'int', nullable: false })
-  public created_at: number;
+  created_at: number;
 
   @OneToOne(() => User, (user) => user.orgOwnerEntity, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'ownerUserEntityId' })
-  public ownerUserEntity: User;
+  ownerUserEntity: User;
 
   @Column()
-  public ownerUserEntityId: number;
+  ownerUserEntityId: number;
 
-  @ManyToMany(() => User, (user) => user.orgEntities)
-  @JoinTable({ name: 'organization_user_list' })
-  public userEntities: User[];
+  @OneToMany(
+    () => UsersInOrganizationEntity,
+    (uio: UsersInOrganizationEntity) => uio.organizationEntityId,
+  )
+  userInOrganizationEntities: UsersInOrganizationEntity[];
 
   constructor(partial: Partial<Organization>) {
     Object.assign(this, partial);

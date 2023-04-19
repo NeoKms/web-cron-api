@@ -13,25 +13,25 @@ import { Log } from '../../log/eitities/log.entity';
 @Entity()
 export class Job {
   @PrimaryGeneratedColumn()
-  public id: number;
+  id: number;
   @ManyToOne(() => Ssh, (ssh) => ssh.jobEntities, {
     onUpdate: 'CASCADE',
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'sshEntityId' })
-  public sshEntity: Ssh;
+  sshEntity: Ssh;
   @Column()
-  public sshEntityId: number;
+  sshEntityId: number;
   @Column({ nullable: false })
-  public job: string;
+  job: string;
   @Column({ type: 'json', nullable: false })
-  public time: CronTimerDto;
+  time: CronTimerDto;
   @Column('tinyint', { default: 1 })
-  public isActive: number;
+  isActive: number;
   @Column('tinyint', { default: 0 })
-  public isDel: number;
+  isDel: number;
   @OneToMany(() => Log, (log) => log.jobEntityId)
-  private logEntities: Log[];
+  logEntities: Log[];
 
   constructor(partial: Partial<Job>) {
     Object.assign(this, partial);

@@ -36,16 +36,20 @@ export type I18nTranslations = {
         };
         "email_templates": {
             "send_code": {
-                "text": string;
                 "subject": string;
+                "text": string;
             };
             "sign_up": {
-                "text": string;
                 "subject": string;
+                "text": string;
+            };
+            "about_new_user": {
+                "subject": string;
+                "text": string;
             };
             "add_in_org": {
-                "text": string;
                 "subject": string;
+                "text": string;
             };
         };
     };
@@ -69,6 +73,7 @@ export type I18nTranslations = {
             "auth_ssh": string;
             "econnrefused": string;
             "notfound_remote": string;
+            "private_key": string;
         };
         "messages": {
             "start_all_servers": string;
@@ -86,6 +91,7 @@ export type I18nTranslations = {
             "not_found": string;
             "org_change": string;
             "duplicate_email": string;
+            "need_a_user": string;
         };
     };
 };

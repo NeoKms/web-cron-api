@@ -1,53 +1,53 @@
 import {
   Column,
   Entity,
-  ManyToMany,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { defaultRights } from '../../helpers/constants';
 import RightsDto from '../../auth/dto/rights.dto';
 import { Organization } from '../../organization/entities/organization.entity';
+import { UsersInOrganizationEntity } from '../../organization/entities/usersInOrganization.entity';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  public id: number;
+  id: number;
 
   @Column('text')
-  public fio: string;
+  fio: string;
 
   @Column()
-  public password_hash: string;
+  password_hash: string;
 
   @Column({ type: 'text', unique: true })
-  public email: string;
+  email: string;
 
   @Column({ type: 'varchar', unique: true, nullable: true })
-  public phone: string;
-
-  @Column({ type: 'json', default: JSON.stringify(defaultRights) })
-  public rights: RightsDto;
+  phone: string;
 
   @Column({ type: 'int', nullable: true })
-  public login_timestamp: number;
-
-  @Column({ type: 'boolean', default: true })
-  public active: boolean;
+  login_timestamp: number;
 
   @Column({ type: 'int', default: 0 })
-  public login_cnt: number;
+  login_cnt: number;
 
   @Column({ type: 'int', default: 0 })
-  public banned_to: number;
+  banned_to: number;
 
   @OneToOne(() => Organization, (org) => org.ownerUserEntity)
   orgOwnerEntity: Organization;
 
-  @ManyToMany(() => Organization, (org) => org.userEntities, { eager: true })
-  orgEntities: Organization[];
+  @OneToMany(
+    () => UsersInOrganizationEntity,
+    (uio: UsersInOrganizationEntity) => uio.userEntityId,
+  )
+  userInOrganizationEntities: UsersInOrganizationEntity[];
 
   orgSelectedId: number;
+  orgEntities: Organization[];
+  rights: RightsDto;
+  isActive: boolean;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

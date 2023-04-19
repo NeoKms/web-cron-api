@@ -4,6 +4,7 @@
     "bad_req": "Invalid request parameters",
     "not_found": "User is not found",
     "org_change": "organization not found",
-    "duplicate_email": "a user with a similar email is already in the system"
+    "duplicate_email": "a user with a similar email is already in the system",
+    "need_a_user": "The user profile has not been submitted for data manipulation"
   }
 }

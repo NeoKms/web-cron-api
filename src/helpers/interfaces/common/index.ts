@@ -9,6 +9,11 @@ export class MWRDto<T> {
   result: T;
 }
 
+export interface InviteCodeData {
+  orgId: number;
+  email: string;
+}
+
 export interface SimpleObject {
   [key: string]: any;
 }

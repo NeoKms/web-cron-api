@@ -5,17 +5,17 @@ import { LogStatusesType } from '../../helpers/interfaces/log';
 @Entity()
 export class Log {
   @PrimaryColumn({ nullable: false })
-  public timestamp_start: number;
-  @ManyToOne(() => Job, (job) => job, {
+  timestamp_start: number;
+  @ManyToOne(() => Job, (job) => job.logEntities, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'jobEntityId' })
-  public jobEntity: Job;
+  jobEntity: Job;
   @PrimaryColumn({ nullable: false })
-  public jobEntityId: number;
+  jobEntityId: number;
   @Column('tinyint', { default: 0 })
-  public isDel: number;
+  isDel: number;
   @Column({ nullable: true })
   public timestamp_end: number;
   @Column({

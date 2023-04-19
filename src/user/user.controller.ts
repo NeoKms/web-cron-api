@@ -111,13 +111,11 @@ export class UserController {
     level: 'write',
   })
   @Delete(':id')
-  async remove(
+  async deactivate(
     @Param('id') id: string,
     @UserProfile() user: ResponseUserDto,
   ): Promise<DefaultMessageDto> {
-    //todo если это пользователь, владеющий другой организацией, то его не деактивировать, а удалить из текущей организации
-    //todo права пользователя должны быть закреплены за конкретной организацией.
-    await this.userService.remove(+id, user);
+    await this.userService.deactivate(+id, user);
     return MESSAGE_OK;
   }
 
@@ -152,7 +150,7 @@ export class UserController {
     @Param('id') id: string,
     @UserProfile() user: ResponseUserDto,
   ): Promise<DefaultMessageDto> {
-    this.userService.changeOrg(+id, user);
+    await this.userService.changeOrg(+id, user);
     return MESSAGE_OK;
   }
 }

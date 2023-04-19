@@ -18,7 +18,7 @@ import { Job } from '../jobs/entities/job.entity';
 import { LogService } from '../log/log.service';
 import { CronExpression, SchedulerRegistry, Timeout } from '@nestjs/schedule';
 import { CronJob } from 'cron';
-import { copyObj, getNowTimestampSec } from '../helpers/constants';
+import { cipher, copyObj, getNowTimestampSec } from '../helpers/constants';
 import { Logger } from '../helpers/logger';
 import {
   additionalSelect,
@@ -282,10 +282,13 @@ export class SshService {
       const { id } = await repo.save(createSshDto.toEntity(user));
       await fsModule.writeFile(
         this.configService.get('U_DIRS.keys') + id,
-        createSshDto.privateKey.buffer.toString('utf-8'),
+        cipher(createSshDto.privateKey.buffer.toString('utf-8')),
       );
       newSshEntity = await this.getById(id, user, manager);
-      await this.getSshClient(newSshEntity);
+      await this.getSshClient(newSshEntity).catch(async (err) => {
+        await fsModule.rm(this.configService.get('U_DIRS.keys') + id);
+        throw err;
+      });
     });
     return newSshEntity;
   }

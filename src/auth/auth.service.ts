@@ -2,11 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'nestjs-redis';
-import {
-  getNowTimestampSec,
-  hashCode,
-  hashPassword,
-} from '../helpers/constants';
+import { getNowTimestampSec, hashPassword, md5 } from '../helpers/constants';
 import { plainToClass } from 'class-transformer';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import * as Redis from 'ioredis';
@@ -17,6 +13,7 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../i18n/i18n.generated';
 import { SignUpDto } from './dto/sign-up.dto';
 import { User } from '../user/entities/user.entity';
+import { InviteCodeData } from '../helpers/interfaces/common';
 
 @Injectable()
 export class AuthService {
@@ -59,7 +56,7 @@ export class AuthService {
     else return Math.floor(Math.random() * 100000000 + 1).toString();
   }
   async sendCode(email: string): Promise<string> {
-    const verifyKey = hashCode(email + Date.now().toString()).toString();
+    const verifyKey = md5(email + Date.now().toString()).toString();
     const code = this.generateCode();
     const cantRetryKey = email + '_retry';
     const nowTs = getNowTimestampSec();
@@ -117,9 +114,18 @@ export class AuthService {
     await this.userService.updateInternal(user.id, userToUpd);
     const { inviteCode } = req.body;
     if (result instanceof ResponseUserDto && inviteCode) {
-      const orgId = await this.redisClient.get(inviteCode).then((res) => +res);
-      if (orgId > 0) {
-        await this.userService.acceptInviteCode(result, orgId);
+      const inviteCodeData = await this.redisClient
+        .get(inviteCode)
+        .then((res) => {
+          if (res) {
+            return JSON.parse(res) as InviteCodeData;
+          } else {
+            return false;
+          }
+        });
+      if (inviteCodeData !== false && result.email === inviteCodeData.email) {
+        await this.userService.acceptInviteCode(result, inviteCodeData.orgId);
+        await this.redisClient.del(inviteCode);
       }
     }
     return result;

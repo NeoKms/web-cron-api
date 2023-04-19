@@ -8,6 +8,8 @@ import { BadRequestException } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { LogService } from '../../log/log.service';
+import * as fsModule from 'fs/promises';
+import { copyObj, decipher } from '../../helpers/constants';
 
 export class SshClient {
   private readonly WEB_CRON_MARK = 'webcron';
@@ -43,12 +45,19 @@ export class SshClient {
           args: { host: this.config.host },
         }),
       );
+    } else if (text.match(/Cannot parse privateKey/gi)) {
+      return new BadRequestException(this.i18n.t('ssh.errors.private_key'));
     }
     return error;
   }
   public async waitConnection(errCnt = 5): Promise<SshClient> {
+    const configCopy = copyObj(this.config);
+    delete configCopy.privateKeyPath;
+    configCopy.privateKey = await fsModule
+      .readFile(this.config.privateKeyPath, 'utf-8')
+      .then((res) => decipher(res));
     return this.instance
-      .connect(this.config)
+      .connect(configCopy)
       .then(() => this.getCronFile())
       .then(() => this.initWebcronDir())
       .then(() => this)

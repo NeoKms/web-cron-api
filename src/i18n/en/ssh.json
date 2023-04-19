@@ -6,7 +6,8 @@
     "cannot_delete": "you cannot delete a server to which at least one job is assigned",
     "auth_ssh": "[{host}] Server authorization error",
     "econnrefused": "server {host} is not available",
-    "notfound_remote": "server not found"
+    "notfound_remote": "server not found",
+    "private_key": "problem with private key"
   },
   "messages": {
     "start_all_servers": "Initialization of log collection for all servers begins",

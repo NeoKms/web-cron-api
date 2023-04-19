@@ -17,6 +17,7 @@ import { Organization } from '../organization/entities/organization.entity';
 import { ResponseUserDto } from './dto/response-user.dto';
 import { UsersInOrganizationEntity } from '../organization/entities/usersInOrganization.entity';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
+import { MailerService } from '../mailer/mailer.service';
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,7 @@ export class UserService {
     private readonly usersInOrgRepository: Repository<UsersInOrganizationEntity>,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly dataSource: DataSource,
+    private readonly mailerService: MailerService,
   ) {}
 
   async create(
@@ -34,7 +36,7 @@ export class UserService {
     user: ResponseUserDto | null,
     manager2?: EntityManager,
   ): Promise<User> {
-    let newUserEntity = null;
+    let newUserEntity: User | null = null;
     const isSignUp = userDto instanceof SignUpDto;
     if (!isSignUp && user === null) {
       throw new BadRequestException(this.i18n.t('user.errors.need_a_user'));
@@ -105,9 +107,31 @@ export class UserService {
         );
       }
     });
-    if (!isSignUp) {
-      //todo send email about new user in org
-      //todo send email to admin about new user
+    if (!isSignUp && newUserEntity) {
+      const selectedOrg = user.orgEntities.find(
+        (org) => org.id === user.orgSelectedId,
+      );
+      const userRepo = manager2
+        ? manager2.getRepository(User)
+        : this.userRepository;
+      const orgAdminUser = await userRepo.findOne({
+        select: { email: true },
+        where: { id: selectedOrg.ownerUserEntityId },
+      });
+      this.mailerService.sendEmail(
+        orgAdminUser.email,
+        this.i18n.t('mailer.email_templates.about_new_user.subject', {
+          args: {
+            org_name: selectedOrg.name,
+          },
+        }),
+        this.i18n.t('mailer.email_templates.about_new_user.text', {
+          args: {
+            name: newUserEntity.fio,
+            email: newUserEntity.email,
+          },
+        }),
+      );
     }
     return newUserEntity;
   }

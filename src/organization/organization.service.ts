@@ -58,7 +58,10 @@ export class OrganizationService {
       const inviteCode = md5(email + Date.now());
       await this.redisClient.set(
         inviteCode,
-        user.orgSelectedId.toString(),
+        JSON.stringify({
+          email: email,
+          orgId: user.orgSelectedId,
+        }),
         'EX',
         this.INVITE_CODE_EXPIRES_SEC,
       );

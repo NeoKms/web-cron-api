@@ -7,4 +7,5 @@ exclude:
       - .eslintrc.js
       - app.config.js
       - .github/
+      - types
 failThreshold: 1

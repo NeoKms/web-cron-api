@@ -3,6 +3,7 @@
 /node_modules
 /upload/*
 **/coverage
+/types
 # Logs
 logs
 *.log

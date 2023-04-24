@@ -12,6 +12,9 @@ export type I18nTranslations = {
             "ban_login": string;
             "send_code_retry": string;
             "code_error": string;
+            "reset_pass": string;
+            "change_pass_check": string;
+            "change_pass_now": string;
         };
     };
     "job": {
@@ -48,6 +51,14 @@ export type I18nTranslations = {
                 "text": string;
             };
             "add_in_org": {
+                "subject": string;
+                "text": string;
+            };
+            "reset_pass": {
+                "subject": string;
+                "text": string;
+            };
+            "reset_pass_success": {
                 "subject": string;
                 "text": string;
             };

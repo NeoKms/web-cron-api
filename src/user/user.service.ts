@@ -216,6 +216,7 @@ export class UserService {
   }
 
   async updateInternal(id: number, user: User): Promise<User> {
+    user.id = id;
     return this.userRepository.save(user);
   }
 

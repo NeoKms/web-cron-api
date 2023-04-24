@@ -22,6 +22,7 @@ module.exports = {
     '**/upload',
     'dist/',
     'src/i18n/i18n.generated.ts',
+    'types'
   ],
   rules: {
     semi: ['error', 'always'],

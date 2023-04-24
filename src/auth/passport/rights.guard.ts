@@ -24,13 +24,15 @@ export class RightsGuard extends LoggedInGuard {
         'rights',
         context.getHandler(),
       );
-      return (
-        (await super.canActivate(context)) &&
-        checkRight.some(
+      const isAuth = await super.canActivate(context);
+      let rightsSuccess = true;
+      if (checkRight.length) {
+        rightsSuccess = checkRight.some(
           (rightObj) =>
             req?.user?.rights[rightObj.entity] >= rights[rightObj.level],
-        )
-      );
+        );
+      }
+      return isAuth && rightsSuccess;
     } else {
       return false;
     }

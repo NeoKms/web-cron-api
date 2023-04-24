@@ -23,6 +23,14 @@
     "add_in_org": {
       "subject": "You were invited to the organization \"{org_name}\".",
       "text": "You have been invited to the organization \"{org_name}\".\nInvite code is {code}. The code is valid for {hours} hours."
+    },
+    "reset_pass": {
+      "subject":"Password reset request",
+      "text": "A password reset request has been received. To reset your password, follow <a href=\"{link}\" target=\"__blank\">the link</a>"
+    },
+    "reset_pass_success": {
+      "subject": "Password changed",
+      "text": "The password has been successfully changed. New password: {pass}."
     }
   }
 }

@@ -14,6 +14,9 @@ import { I18nTranslations } from '../i18n/i18n.generated';
 import { SignUpDto } from './dto/sign-up.dto';
 import { User } from '../user/entities/user.entity';
 import { InviteCodeData } from '../helpers/interfaces/common';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResetPassRedisData } from '../helpers/interfaces/auth';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -56,7 +59,7 @@ export class AuthService {
     else return Math.floor(Math.random() * 100000000 + 1).toString();
   }
   async sendCode(email: string): Promise<string> {
-    const verifyKey = md5(email + Date.now().toString()).toString();
+    const verifyKey = md5(email + Date.now().toString());
     const code = this.generateCode();
     const cantRetryKey = email + '_retry';
     const nowTs = getNowTimestampSec();
@@ -168,5 +171,112 @@ export class AuthService {
         }),
       )
       .catch(() => null);
+  }
+
+  async resetPass(dto: ResetPasswordDto): Promise<null | string> {
+    if (dto.verifyCode) {
+      const data = await this.redisClient
+        .get(dto.verifyCode)
+        .then((res) =>
+          !!res ? (JSON.parse(res) as ResetPassRedisData) : null,
+        );
+      if (!data) {
+        throw new BadRequestException(this.i18n.t('auth.errors.reset_pass'));
+      }
+      await this.redisClient.del(dto.verifyCode);
+      const user = await this.userService.findOne({ email: data.email });
+      if (!user) {
+        throw new BadRequestException(this.i18n.t('auth.errors.reset_pass'));
+      }
+      const newPass = md5(Date.now().toString()).slice(0, 10);
+      await this.userService.updateInternal(
+        user.id,
+        new User({
+          password_hash: hashPassword(newPass),
+        }),
+      );
+      this.deleteAllRedisSessionByUserId(user.id);
+      this.mailerService.sendEmail(
+        data.email,
+        this.i18n.t('mailer.email_templates.reset_pass_success.subject'),
+        this.i18n.t('mailer.email_templates.reset_pass_success.text', {
+          args: {
+            pass: newPass,
+          },
+        }),
+      );
+      return data.redirect;
+    } else if (dto.email) {
+      const user = await this.userService.findOne({
+        email: dto.email,
+        withoutError: true,
+      });
+      if (!user) return;
+      const cantRetryKey = dto.email + '_retry';
+      const cantRetry = await this.redisClient.get(cantRetryKey);
+      const nowTs = getNowTimestampSec();
+      if (cantRetry && !this.configService.get('PRODUCTION')) {
+        throw new BadRequestException(
+          this.i18n.t('auth.errors.send_code_retry', {
+            args: { sec: parseInt(cantRetry) - nowTs },
+          }),
+        );
+      } else {
+        await this.redisClient.set(cantRetryKey, nowTs + 60, 'EX', 60);
+      }
+      const verifyCode = md5(dto.email + Date.now().toString());
+      await this.redisClient.set(
+        verifyCode,
+        JSON.stringify({
+          email: dto.email,
+          redirect: dto.redirect ?? null,
+        } as ResetPassRedisData),
+        'EX',
+        60 * 15,
+      );
+      const link = `${this.configService.get(
+        'SELF_DOMAIN',
+      )}/auth/password/reset?verifyCode=${verifyCode}`;
+      this.mailerService.sendEmail(
+        dto.email,
+        this.i18n.t('mailer.email_templates.reset_pass.subject'),
+        this.i18n.t('mailer.email_templates.reset_pass.text', {
+          args: {
+            link,
+          },
+        }),
+      );
+      return null;
+    }
+  }
+
+  async changePass(
+    dto: ChangePasswordDto,
+    user: ResponseUserDto,
+  ): Promise<void> {
+    if (dto.new !== dto.newTwice) {
+      throw new BadRequestException(
+        this.i18n.t('auth.errors.change_pass_check'),
+      );
+    }
+    const userExist = await this.userService.findOne({ id: user.id });
+    if (hashPassword(dto.current) !== userExist.password_hash) {
+      throw new BadRequestException(this.i18n.t('auth.errors.change_pass_now'));
+    }
+    await this.userService.updateInternal(
+      user.id,
+      new User({
+        password_hash: hashPassword(dto.new),
+      }),
+    );
+    this.mailerService.sendEmail(
+      user.email,
+      this.i18n.t('mailer.email_templates.reset_pass_success.subject'),
+      this.i18n.t('mailer.email_templates.reset_pass_success.text', {
+        args: {
+          pass: dto.new,
+        },
+      }),
+    );
   }
 }

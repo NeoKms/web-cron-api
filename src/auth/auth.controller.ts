@@ -10,6 +10,8 @@ import {
   UsePipes,
   ValidationPipe,
   HttpCode,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -23,6 +25,10 @@ import { MESSAGE_OK } from '../helpers/constants';
 import { UserProfile } from '../helpers/decorators/user.decorator';
 import SendCodeDto from './dto/send-code.dto';
 import { SignUpDto } from './dto/sign-up.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Response } from 'express';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { Rights } from './passport/rights.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -82,6 +88,32 @@ export class AuthController {
   @Post('/signup')
   async signUp(@Body() dto: SignUpDto): Promise<DefaultMessageDto> {
     await this.authService.signUp(dto);
+    return MESSAGE_OK;
+  }
+
+  @ApiResponse({ type: DefaultMessageDto, status: 200 })
+  @HttpCode(200)
+  @Get('/password/reset')
+  async resetPass(
+    @Query() dto: ResetPasswordDto,
+    @Res() res: Response,
+  ): Promise<DefaultMessageDto | void> {
+    const redirectTo = await this.authService.resetPass(dto);
+    if (redirectTo) {
+      return res.redirect(303, redirectTo);
+    }
+    return MESSAGE_OK;
+  }
+
+  @Rights()
+  @ApiResponse({ type: DefaultMessageDto, status: 200 })
+  @HttpCode(200)
+  @Post('/password/change')
+  async changePass(
+    @Body() dto: ChangePasswordDto,
+    @UserProfile() user: ResponseUserDto,
+  ): Promise<DefaultMessageDto> {
+    await this.authService.changePass(dto, user);
     return MESSAGE_OK;
   }
 }

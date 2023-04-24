@@ -63,6 +63,7 @@ export default () => ({
     key: 'connect.sid',
     cookie_domain: env.COOKIE_DOMAIN,
   },
+  SELF_DOMAIN: env.SELF_DOMAIN ?? '',
 });
 
 function checkStaticDir(dir: string): string {

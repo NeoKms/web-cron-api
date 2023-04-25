@@ -98,7 +98,11 @@ export class AuthService {
     let result = null;
     this.logger.log('login: ' + username);
     req.sentryContext.breadcrumbs.push({ f: 'login username', v: username });
-    const user = await this.userService.findOne({ email: username });
+    const user = await this.userService.findOne({
+      email: username,
+      withoutError: true,
+    });
+    if (!user) return null;
     const userToUpd = new User({ id: user.id });
     userToUpd.login_cnt = user.login_cnt + 1;
     if (user.password_hash === hashPassword(password.toString())) {

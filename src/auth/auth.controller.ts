@@ -92,7 +92,6 @@ export class AuthController {
   }
 
   @ApiResponse({ type: DefaultMessageDto, status: 200 })
-  @HttpCode(200)
   @Get('/password/reset')
   async resetPass(
     @Query() dto: ResetPasswordDto,
@@ -102,7 +101,7 @@ export class AuthController {
     if (redirectTo) {
       return res.redirect(303, redirectTo);
     }
-    return MESSAGE_OK;
+    res.send(MESSAGE_OK);
   }
 
   @Rights()

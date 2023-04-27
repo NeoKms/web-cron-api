@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UsePipes,
   ValidationPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -57,8 +58,9 @@ export class UserController {
     entity: 'users',
     level: 'read',
   })
+  @HttpCode(200)
   @ApiResponse({ type: ResponseUserDto, isArray: true })
-  @Get()
+  @Post('/list')
   async findAll(
     @UserProfile() user: ResponseUserDto,
   ): Promise<MWRDto<ResponseUserDto[]>> {

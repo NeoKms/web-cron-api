@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, LessThan, Repository } from 'typeorm';
+import { DataSource, EntityManager, LessThan, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { FindOneUser } from '../helpers/interfaces/user';
 import { I18nService } from 'nestjs-i18n';
@@ -140,6 +140,7 @@ export class UserService {
     const users = await this.userRepository.find({
       relations: ['userInOrganizationEntities'],
       where: {
+        id: Not(user.id),
         userInOrganizationEntities: {
           organizationEntityId: user.orgSelectedId,
         },

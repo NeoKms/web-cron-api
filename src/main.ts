@@ -40,7 +40,7 @@ async function bootstrap() {
     const corsOpt = {
       credentials: true,
       origin: req.headers.origin || '*',
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      methods: 'GET,PUT,PATCH,POST,DELETE',
     };
     callback(null, corsOpt);
   });

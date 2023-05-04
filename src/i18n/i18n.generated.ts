@@ -85,6 +85,7 @@ export type I18nTranslations = {
             "econnrefused": string;
             "notfound_remote": string;
             "private_key": string;
+            "timeout_handshake": string;
         };
         "messages": {
             "start_all_servers": string;

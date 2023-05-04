@@ -7,7 +7,8 @@
     "auth_ssh": "[{host}] Server authorization error",
     "econnrefused": "server {host} is not available",
     "notfound_remote": "server not found",
-    "private_key": "problem with private key"
+    "private_key": "problem with private key",
+    "timeout_handshake": "Timed out while waiting for handshake"
   },
   "messages": {
     "start_all_servers": "Initialization of log collection for all servers begins",

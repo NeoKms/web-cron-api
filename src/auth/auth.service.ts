@@ -152,6 +152,7 @@ export class AuthService {
     }
     user.orgEntities = userInDb.orgEntities;
     user.rights = userInDb.rights;
+    user.fio = userInDb.fio;
     return user;
   }
 

@@ -10,12 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import {
-  HasMimeType,
-  IsFile,
-  MaxFileSize,
-  MemoryStoredFile,
-} from 'nestjs-form-data';
+import { IsFile, MaxFileSize, MemoryStoredFile } from 'nestjs-form-data';
 import { getNowTimestampSec } from '../../helpers/constants';
 import { ResponseUserDto } from '../../user/dto/response-user.dto';
 import { Organization } from '../../organization/entities/organization.entity';
@@ -50,7 +45,6 @@ export default class CreateSshDto extends PartialType(Ssh) {
   @Expose()
   @IsFile()
   @MaxFileSize(20480)
-  @HasMimeType(['application/octet-stream'])
   public privateKey: MemoryStoredFile;
 
   public toEntity({

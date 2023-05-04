@@ -44,6 +44,7 @@ export const decipher = (str: string): string => {
       .split('.')
       .map((el) => +el),
   );
+  str = str.split('/')[0];
   const key = crypto.scryptSync(config().SSH.SECRET_KEY, config().SSH.SALT, 32);
   return crypto
     .createDecipheriv('aes-256-ctr', key, iv)

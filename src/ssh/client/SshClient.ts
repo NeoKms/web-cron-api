@@ -47,6 +47,10 @@ export class SshClient {
       );
     } else if (text.match(/Cannot parse privateKey/gi)) {
       return new BadRequestException(this.i18n.t('ssh.errors.private_key'));
+    } else if (text.match(/Timed out while waiting for handshake/gi)) {
+      return new BadRequestException(
+        this.i18n.t('ssh.errors.timeout_handshake'),
+      );
     }
     return error;
   }
@@ -56,6 +60,7 @@ export class SshClient {
     configCopy.privateKey = await fsModule
       .readFile(this.config.privateKeyPath, 'utf-8')
       .then((res) => decipher(res));
+    configCopy.readyTimeout = (errCnt || 1) * 1000;
     return this.instance
       .connect(configCopy)
       .then(() => this.getCronFile())

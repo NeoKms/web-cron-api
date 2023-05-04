@@ -254,8 +254,9 @@ export class UserService {
     await repo.save(userEntityToUpd);
     const [nowUserInOrgEntity] = existUser.userInOrganizationEntities;
     if (
+      userEntityToUpd.rights &&
       JSON.stringify(nowUserInOrgEntity.rights) !==
-      JSON.stringify(updateUserDto.rights)
+        JSON.stringify(updateUserDto.rights)
     ) {
       await repoUserInOrg.update(
         {

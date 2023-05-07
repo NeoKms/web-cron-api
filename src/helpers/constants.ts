@@ -1,6 +1,10 @@
 import * as crypto from 'node:crypto';
 import config from '../config';
 import RightsDto from '../auth/dto/rights.dto';
+import { CronTimerDto } from '../jobs/dto/cron-timer.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../i18n/i18n.generated';
+import { BadRequestException } from '@nestjs/common';
 
 export type rightsType = {
   deny: number;
@@ -98,4 +102,47 @@ export const fillOptionsByParams = (params, options): void => {
       options.skip < 0 && delete options.skip;
     }
   }
+};
+
+const cronTimeRegexp = {
+  min: /^([0-9]|[1-5][0-9])$/gi,
+  hour: /^([0-9]|1[0-9]|2[0-3])$/gi,
+  dom: /^([1-9]|[1-2][0-9]|3[0-1])$/gi,
+  month: /^([1-9]|1[0-2])$/gi,
+  dow: /^([0-6])$/gi,
+};
+const cronTimeChecker = (value: string, regexp: RegExp) => {
+  value = (value?.toString() || '').trim();
+  if (value === '*') {
+    return true;
+  }
+  const fnd = value
+    .split(',')
+    .reduce((acc: string[], el) => {
+      return acc.concat(el.split('-'));
+    }, [] as string[])
+    .find((num) => !regexp.test(num));
+  return !(!/^[0-9,-]+$/gi.test(value) || !!fnd || fnd === '');
+};
+
+export const cronTimeObjectChecker = (
+  obj: CronTimerDto,
+  i18n: I18nService<I18nTranslations>,
+) => {
+  if (!cronTimeChecker(obj.minute.value, cronTimeRegexp.min)) {
+    throw new BadRequestException(i18n.t('job.errors.time.min'));
+  }
+  if (!cronTimeChecker(obj.hour.value, cronTimeRegexp.hour)) {
+    throw new BadRequestException(i18n.t('job.errors.time.hour'));
+  }
+  if (!cronTimeChecker(obj.day.value, cronTimeRegexp.dom)) {
+    throw new BadRequestException(i18n.t('job.errors.time.dayOfMonth'));
+  }
+  if (!cronTimeChecker(obj.month.value, cronTimeRegexp.month)) {
+    throw new BadRequestException(i18n.t('job.errors.time.month'));
+  }
+  if (!cronTimeChecker(obj.weekDay.value, cronTimeRegexp.dow)) {
+    throw new BadRequestException(i18n.t('job.errors.time.dayOfWeek'));
+  }
+  return true;
 };

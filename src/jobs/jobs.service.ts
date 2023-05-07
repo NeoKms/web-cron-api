@@ -14,7 +14,10 @@ import { I18nTranslations } from '../i18n/i18n.generated';
 import { SshService } from '../ssh/ssh.service';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
-import { fillOptionsByParams } from '../helpers/constants';
+import {
+  cronTimeObjectChecker,
+  fillOptionsByParams,
+} from '../helpers/constants';
 
 @Injectable()
 export class JobsService {
@@ -44,6 +47,7 @@ export class JobsService {
     user: ResponseUserDto,
     manager2?: EntityManager,
   ): Promise<Job> {
+    cronTimeObjectChecker(dto.time, this.i18n);
     let newJobSavedEntity = {} as Job;
     const newJob = dto.toEntity();
     await this.dataSource.transaction(async (manager) => {

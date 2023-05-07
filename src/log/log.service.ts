@@ -110,6 +110,7 @@ export class LogService {
         jobEntity: {
           id: true,
           sshEntityId: true,
+          name: true,
         },
       },
       relations: {

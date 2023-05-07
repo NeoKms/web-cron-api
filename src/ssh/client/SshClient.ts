@@ -106,10 +106,7 @@ export class SshClient {
   }
   private createCronJobString(job: Job) {
     const getTime = (timeElement: CronTimeElement): string => {
-      return (
-        (timeElement.period ? '*/' : '') +
-        (timeElement.value >= 0 ? timeElement.value : '*')
-      );
+      return (timeElement.period ? '*/' : '') + timeElement.value;
     };
     return [
       getTime(job.time.minute),

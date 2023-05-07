@@ -1,6 +1,13 @@
 {
   "errors": {
     "not_found": "Job is not found",
-    "bad_req": "Invalid request parameters"
+    "bad_req": "Invalid request parameters",
+    "time": {
+      "min": "q",
+      "hour": "2",
+      "dayOfMonth": "2",
+      "month": "1",
+      "dayOfWeek": "1"
+    }
   }
 }

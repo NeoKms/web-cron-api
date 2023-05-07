@@ -17,6 +17,12 @@ import { Job } from '../entities/job.entity';
 @Exclude()
 export default class CreateJobDto {
   @Expose()
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
+  public name: string;
+  @Expose()
   @IsNumber()
   @IsPositive()
   public sshEntityId: number;
@@ -41,7 +47,7 @@ export default class CreateJobDto {
       if (!it.time[p]) {
         it.time[p] = {
           period: false,
-          value: -1,
+          value: '*',
         };
       }
     });

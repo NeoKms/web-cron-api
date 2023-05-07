@@ -24,6 +24,8 @@ export class Job {
   sshEntityId: number;
   @Column({ nullable: false })
   job: string;
+  @Column()
+  name: string;
   @Column({ type: 'json', nullable: false })
   time: CronTimerDto;
   @Column('tinyint', { default: 1 })

@@ -15,6 +15,8 @@ export default class ResponseJobDto {
   @Type(() => CronTimerDto)
   public time: CronTimerDto;
   @Expose()
+  public name: string;
+  @Expose()
   @IsNumber()
   public sshEntityId: number;
   @Expose()

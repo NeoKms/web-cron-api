@@ -21,6 +21,13 @@ export type I18nTranslations = {
         "errors": {
             "not_found": string;
             "bad_req": string;
+            "time": {
+                "min": string;
+                "hour": string;
+                "dayOfMonth": string;
+                "month": string;
+                "dayOfWeek": string;
+            };
         };
     };
     "log": {

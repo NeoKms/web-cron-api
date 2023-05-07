@@ -1,5 +1,5 @@
 export interface CronTimeElement {
-  value: number;
+  value: string;
   period: boolean;
 }
 export interface CronTimer {

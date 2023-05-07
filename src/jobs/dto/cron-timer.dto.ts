@@ -2,10 +2,12 @@ import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDefined,
+  IsNotEmpty,
   IsNotEmptyObject,
   IsNumber,
   IsObject,
   IsOptional,
+  IsString,
   Max,
   Min,
   ValidateNested,
@@ -14,10 +16,9 @@ import {
 @Exclude()
 export class CronTimeElementMinDto {
   @Expose()
-  @IsNumber()
-  @Min(-1)
-  @Max(59)
-  public value: number;
+  @IsString()
+  @IsNotEmpty()
+  public value: string;
   @Expose()
   @IsBoolean()
   public period: boolean;
@@ -25,10 +26,9 @@ export class CronTimeElementMinDto {
 @Exclude()
 export class CronTimeElementHourDto {
   @Expose()
-  @IsNumber()
-  @Min(-1)
-  @Max(23)
-  public value: number;
+  @IsString()
+  @IsNotEmpty()
+  public value: string;
   @Expose()
   @IsBoolean()
   public period: boolean;
@@ -36,10 +36,9 @@ export class CronTimeElementHourDto {
 @Exclude()
 export class CronTimeElementDayOfMonthDto {
   @Expose()
-  @IsNumber()
-  @Min(-1)
-  @Max(31)
-  public value: number;
+  @IsString()
+  @IsNotEmpty()
+  public value: string;
   @Expose()
   @IsBoolean()
   public period: boolean;
@@ -47,10 +46,9 @@ export class CronTimeElementDayOfMonthDto {
 @Exclude()
 export class CronTimeElementMonthDto {
   @Expose()
-  @IsNumber()
-  @Min(-1)
-  @Max(12)
-  public value: number;
+  @IsString()
+  @IsNotEmpty()
+  public value: string;
   @Expose()
   @IsBoolean()
   public period: boolean;
@@ -58,10 +56,9 @@ export class CronTimeElementMonthDto {
 @Exclude()
 export class CronTimeElementDayOfWeekDto {
   @Expose()
-  @IsNumber()
-  @Min(-1)
-  @Max(6)
-  public value: number;
+  @IsString()
+  @IsNotEmpty()
+  public value: string;
   @Expose()
   @IsBoolean()
   public period: boolean;
